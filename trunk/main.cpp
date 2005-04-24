@@ -1,8 +1,7 @@
-#include <stdio.h>
+#include <iostream>
+using namespace std;
 
 int main()
 {
-    cout << "Starting Shadowplay" << endl;
-
-    return 0;
+    cout << "Starting Shadowplay\n";
 }
