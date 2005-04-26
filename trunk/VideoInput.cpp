@@ -26,19 +26,10 @@ VideoInput::VideoInput()
     h = 240;
     video_aspect = 1.33333;
 
-    act_video_encode = 0;
-    act_video_buffer = 0;
-    video_buffer_count = 0;
     video_buffer_size = 0;
 
-    picture_format = PIX_FMT_YUV420P;
-
-    startnum = 0;
-
     errored = false;
-	running = false;
-
-    prev_bframe_save_pos = -1;
+	playing = false;
 }
 
 VideoInput::~VideoInput(void)
@@ -46,56 +37,34 @@ VideoInput::~VideoInput(void)
     if (fd >= 0)
         close(fd);
 
-    while (videobuffer.size() > 0)
-    {
-        struct vidbuffertype *vb = videobuffer.back();
-        delete [] vb->buffer;
-        delete vb;
-        videobuffer.pop_back();
-    }
+	delete videobuffer;
 }
 
 void VideoInput::Initialize(void)
 {
-    int videomegs;
-
     if (!video_buffer_size)
     {
-        if (picture_format == PIX_FMT_YUV422P)
-            video_buffer_size = w_out * h_out * 2;
-        else
-            video_buffer_size = w_out * h_out * 3 / 2;
+        video_buffer_size = w_out * h_out * 3 / 2;
     }
 
-    if (w >= 480 || h > 288)
-        videomegs = 20;
-    else
-        videomegs = 12;
-
-    video_buffer_count = (videomegs * 1000 * 1000) / video_buffer_size;
-
-    for (int i = 0; i < video_buffer_count; i++)
-    {
-        vidbuffertype *vidbuf = new vidbuffertype;
-        vidbuf->buffer = new unsigned char[video_buffer_size];
-        vidbuf->freeToBuffer = 1;
-        vidbuf->bufferlen = 0;
-       
-        videobuffer.push_back(vidbuf);
-    }
+    videobuffer = new vidbuffertype;
+    videobuffer->buffer = new unsigned char[video_buffer_size];
+    videobuffer->bufferlen = 0;
 }
 
 bool VideoInput::Open(void)
 {
+	char videodevice [] = "/dev/video0";
+
     if (channelfd>0)
         return true;
 
     int retries = 0;
-    fd = open(videodevice.ascii(), O_RDWR);
+    fd = open(videodevice, O_RDWR);
     while (fd < 0)
     {
         usleep(30000);
-        fd = open(videodevice.ascii(), O_RDWR);
+        fd = open(videodevice, O_RDWR);
         if (retries++ > 5)
         {
             cout << "VideoInput: Can't open video device: " << videodevice << endl;
@@ -141,18 +110,12 @@ void VideoInput::StartCapture(void)
         return;
     }
 
-    if (vc.name[0] == 'B' && vc.name[1] == 'T' && vc.name[2] == '8' &&
-        vc.name[4] == '8')
-        correct_bttv = true;
-
     int channelinput = 66;
 
     vchan.channel = channelinput;
 
     if (ioctl(fd, VIDIOCGCHAN, &vchan) < 0)
         perror("VIDIOCGCHAN");
-
-    inpixfmt = FMT_NONE;
 
     if (ioctl(fd, VIDIOCGMBUF, &vm) < 0)
     {
@@ -183,10 +146,7 @@ void VideoInput::StartCapture(void)
 
     mm.height = h;
     mm.width  = w;
-    if (inpixfmt == FMT_YUV422P)
-        mm.format = VIDEO_PALETTE_YUV422P;
-    else
-        mm.format = VIDEO_PALETTE_YUV420P;  
+    mm.format = VIDEO_PALETTE_YUV420P;  
 
     mm.frame  = 0;
     if (ioctl(fd, VIDIOCMCAPTURE, &mm)<0) 

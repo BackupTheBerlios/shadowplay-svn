@@ -30,8 +30,9 @@ class VideoInput
     void BufferIt(unsigned char *buf, int len = -1);
     
     bool playing;
+    bool errored;
     
-    int fd; // v4l input file handle
+    int fd;
     int w, h;
     int inputchannel;
 
@@ -43,19 +44,12 @@ class VideoInput
     int act_video_buffer;
 
     int video_buffer_count;
-
     long video_buffer_size;
 
-    bool errored;
-
-    VideoFrameType inpixfmt;
-    PixelFormat picture_format;
     int w_out;
     int h_out;
 
     int channelfd;
-
-    long long prev_bframe_save_pos;
 };
 
 #endif

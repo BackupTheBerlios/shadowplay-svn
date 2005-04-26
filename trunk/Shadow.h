@@ -10,6 +10,8 @@ class Shadow
 	~Shadow(void);
 
   private:
+	VideoInput *videoinput;
+
   protected:
 };
 
