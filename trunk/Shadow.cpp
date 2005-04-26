@@ -16,8 +16,9 @@
 using namespace std;
 
 
-Shadow::Shadow()
+Shadow::Shadow(void)
 {
+	cout << "Creating the VideoInput object\n";
 	videoinput = new VideoInput();
 }
 

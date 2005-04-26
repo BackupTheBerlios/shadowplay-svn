@@ -1,5 +1,4 @@
-#include "Shadow.h"
-#include "VideoInput.h"
+#include "Controller.h"
 
 #include <iostream>
 using namespace std;
@@ -8,8 +7,8 @@ int main()
 {
 	cout << "Starting Shadowplay\n";
 
-	cout << "Creating the Shadow object\n";
-	Shadow *shadow = new Shadow();
+	cout << "Creating the Controller object\n";
+	Controller *controller = new Controller();
 
 	return 0;
 }
