@@ -30,6 +30,8 @@ VideoInput::VideoInput()
 
     errored = false;
 	playing = false;
+
+	Initialize();
 }
 
 VideoInput::~VideoInput(void)
@@ -38,6 +40,11 @@ VideoInput::~VideoInput(void)
         close(fd);
 
 	delete videobuffer;
+}
+
+vidbuffertype *VideoInput::GetBuffer(void)
+{
+	return videobuffer;
 }
 
 void VideoInput::Initialize(void)

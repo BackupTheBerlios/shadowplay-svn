@@ -20,8 +20,15 @@ Shadow::Shadow(void)
 {
 	cout << "Creating the VideoInput object\n";
 	videoinput = new VideoInput();
+	
+	videobuffer = videoinput->GetBuffer();
 }
 
 Shadow::~Shadow(void)
 {
+}
+
+vidbuffertype *Shadow::GetBuffer(void)
+{
+	return videobuffer;
 }

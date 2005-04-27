@@ -20,12 +20,14 @@ class VideoInput
     VideoInput();
    ~VideoInput();
 
-    void Initialize(void);
 	void StartCapture(void);
+	vidbuffertype *GetBuffer(void);
 
  protected:
     
  private:
+    void Initialize(void);
+
     bool Open(void);
     void BufferIt(unsigned char *buf, int len = -1);
     

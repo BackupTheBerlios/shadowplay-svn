@@ -5,7 +5,9 @@
 #include <unistd.h>
 
 #include "Shadow.h"
+#include "VideoInput.h"
 #include "GameController.h"
+#include "KeyInput.h"
 
 #include "SDL.h"
 #include "GL/gl.h"
@@ -16,15 +18,37 @@ using namespace std;
 
 GameController::GameController(void)
 {
-	Initialize();
+	cout << "Initializing SDL and openGL\n";
+	InitializeVideoOut();
+
+	cout << "Creating the Shadow object\n";
+	shadow = new Shadow();
+
+	videobuffer = shadow->GetBuffer();
+
+	cout << "Creating the KeyInput object\n";
+	keyinput = new KeyInput();
+
+	Draw();
+
+    running = true;
+
+	cout << "Entering the event loop\n";
+	while (running)
+	{
+		keyinput->CheckKeys();
+		running = keyinput->Running();
+	}
 }
 
 GameController::~GameController(void)
 {
 }
 
-int GameController::Initialize(void)
+int GameController::InitializeVideoOut(void)
 {
+	SDL_Surface* screen;
+
     if( SDL_Init(SDL_INIT_VIDEO) < 0 ) { 
         cout << "Could not initialize SDL: " << SDL_GetError() << endl;
         return -1; 
@@ -40,7 +64,6 @@ int GameController::Initialize(void)
 
 	int flags = SDL_OPENGLBLIT;
 
-	SDL_Surface* screen;
 	screen = SDL_SetVideoMode(800, 600, 16, flags);
 	if( !screen ) {
 		cout << "Couldn't create a surface: " << SDL_GetError() << endl;
@@ -63,30 +86,55 @@ int GameController::Initialize(void)
 	glShadeModel(GL_SMOOTH);
 	glDisable(GL_CULL_FACE);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+}
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+bool GameController::Draw(void)
+{
+    //glBindTexture(GL_TEXTURE_2D, image);
 
-	glBegin(GL_QUADS);
-		glVertex3f(100.0f, 100.0f, 0.0f);
-		glVertex3f(228.0f, 100.0f, 0.0f);
-		glVertex3f(228.0f, 228.0f, 0.0f);
-		glVertex3f(100.0f, 228.0f, 0.0f);
-	glEnd();
+    //Generate the texture
+    //glTexImage2D(GL_TEXTURE_2D, 0, 3, temp->w, temp->h, 0, GL_BGR, GL_UNSIGNED_BYTE, temp->pixels);
 
-	SDL_Event event;
-	bool running = true;
+    //Use linear filtering, very good
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	while(running) {
-		while(SDL_PollEvent(&event)) {
-			switch(event.type){
-				case SDL_KEYDOWN:
-				case SDL_KEYUP:
-					break;
-				case SDL_QUIT:
-					running = false;
-					break;
-			}
-		}
-	}
+    //Make certain everything is cleared from the screen before we draw to it
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    //Enable texturing
+    //glEnable(GL_TEXTURE_2D);
+
+    //Load the texture
+    //glBindTexture(GL_TEXTURE_2D, image);
+
+    glBegin(GL_QUADS);
+        //Top-left vertex (corner)
+        //glTexCoord2f(0,0);
+        glVertex3f(0.0f, 0.0f, 0.0f);
+
+        //Bottom-left vertex (corner)
+        //glTexCoord2f(1,0);
+        glVertex3f(600.0f, 0.0f, 0.0f);
+
+        //Bottom-right vertex (corner)
+        //glTexCoord2f(1,1);
+        glVertex3f(600.0f, 800.0f, 0.0f);
+
+        //Top-right vertex (corner)
+        //glTexCoord2f(0,1);
+        glVertex3f(800.0f, 0.0f, 0.0f);
+    glEnd();
+
+    //Disable texturing
+    //glDisable(GL_TEXTURE_2D);
+
+    //Flush the OpenGL pipeline
+    glFlush();
+
+    //Flip the backbuffer to the primary
+    SDL_GL_SwapBuffers();
+
+	return true;
 }
 
