@@ -1,17 +1,20 @@
 #ifndef KEYINPUT_H
 #define KEYINPUT_H
 
+#include "GameController.h"
+
+class GameController;
+
 class KeyInput
 {
   public:
-	KeyInput(void);
+	KeyInput(GameController *gc);
 	~KeyInput(void);
 
 	int CheckKeys(void);
-	bool Running(void);
 
   private:
-	bool running;
+	GameController *gamecontroller;
 
   protected:
 };

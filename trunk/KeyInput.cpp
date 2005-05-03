@@ -12,9 +12,9 @@
 #include <iostream>
 using namespace std;
 
-KeyInput::KeyInput(void)
+KeyInput::KeyInput(GameController *gc)
 {
-	running = true;
+	gamecontroller = gc;
 }
 
 KeyInput::~KeyInput(void)
@@ -31,13 +31,9 @@ int KeyInput::CheckKeys(void)
 			case SDL_KEYUP:
 				break;
 			case SDL_QUIT:
-				running = false;
+				cout << "KeyInput: Got a quit command\n";
+				gamecontroller->StopPlaying();
 				break;
 		}
 	}
-}
-
-bool KeyInput::Running(void)
-{
-	return running;
 }

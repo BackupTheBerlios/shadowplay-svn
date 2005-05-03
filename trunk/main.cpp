@@ -5,10 +5,13 @@ using namespace std;
 
 int main()
 {
-	cout << "Starting Shadowplay\n";
+	cout << "main: Starting Shadowplay\n";
 
-	cout << "Creating the GameController object\n";
+	cout << "main: Creating the GameController object\n";
 	GameController *gamecontroller = new GameController();
+	cout << "main: Starting to play\n";
+	gamecontroller->StartPlaying();
 
+	cout << "main: Exiting normally\n";
 	return 0;
 }

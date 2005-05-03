@@ -13,17 +13,18 @@
 using namespace std;
 
 #include "VideoInput.h"
-
 #include "videodev.h"
+#include "SDL.h"
+#include "SDL_thread.h"
 
-VideoInput::VideoInput()
+VideoInput::VideoInput(int in_w, int in_h)
 {
     fd = -1;
     channelfd = -1;
     inputchannel = 1;
 
-    w = 352;
-    h = 240;
+    w = in_w;
+    h = in_h;
     video_aspect = 1.33333;
 
     video_buffer_size = 0;
@@ -42,13 +43,9 @@ VideoInput::~VideoInput(void)
 	delete videobuffer;
 }
 
-vidbuffertype *VideoInput::GetBuffer(void)
-{
-	return videobuffer;
-}
-
 void VideoInput::Initialize(void)
 {
+	cout << "VideoInput: Initializing videobuffer\n";
     if (!video_buffer_size)
     {
         video_buffer_size = w_out * h_out * 3 / 2;
@@ -57,11 +54,16 @@ void VideoInput::Initialize(void)
     videobuffer = new vidbuffertype;
     videobuffer->buffer = new unsigned char[video_buffer_size];
     videobuffer->bufferlen = 0;
+	videobuffer->w = w;
+	videobuffer->h = h;
+
+	Open();
 }
 
 bool VideoInput::Open(void)
 {
 	char videodevice [] = "/dev/video0";
+	cout << "VideoInput: Opening " << videodevice << endl;
 
     if (channelfd>0)
         return true;
@@ -85,8 +87,28 @@ bool VideoInput::Open(void)
     return true;
 }
 
-void VideoInput::StartCapture(void)
+void VideoInput::StopPlaying(void)
 {
+	playing = false;
+	SDL_WaitThread(thread, NULL);
+}
+
+void VideoInput::StartPlaying(void)
+{
+    thread = SDL_CreateThread(CaptureThread, static_cast<void *>(this));
+    if (thread == NULL)
+        cout << "Shadow: Unable to create thread: " << SDL_GetError() << endl;
+}
+
+extern "C"
+int CaptureThread(void *vi)
+{
+	static_cast<VideoInput *>(vi)->CaptureLoop();
+}
+
+void VideoInput::CaptureLoop(void)
+{
+	cout << "VideoInput: Starting to capture video\n";
     if (getuid() == 0)
         nice(-10);
 
@@ -163,8 +185,9 @@ void VideoInput::StartCapture(void)
         perror("VIDIOCMCAPTUREi1");
     
     playing = true;
-
     int syncerrors = 0;
+
+	cout << "VideoInput: Entering the capture loop\n";
 
     while (playing) 
     {
@@ -215,7 +238,10 @@ void VideoInput::BufferIt(unsigned char *buf, int len)
 {
     memcpy(videobuffer->buffer, buf, len);
     videobuffer->bufferlen = len;
+}
 
-    return;
+vidbuffertype *VideoInput::GetBuffer(void)
+{
+	return videobuffer;
 }
 

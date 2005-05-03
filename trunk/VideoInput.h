@@ -6,29 +6,39 @@
 #include <time.h>
 #include <pthread.h>
 
+#include "SDL.h"
+#include "SDL_thread.h"
+
 using namespace std;
 
 typedef struct vidbuffertype
 {
     unsigned char *buffer;
     int bufferlen;
+	int w;
+	int h;
 } vidbuffertyp;
+
+extern "C" int CaptureThread(void *);
 
 class VideoInput
 {
  public:
-    VideoInput();
+    VideoInput(int in_w, int in_h);
    ~VideoInput();
 
-	void StartCapture(void);
+	void StartPlaying(void);
+	void StopPlaying(void);
 	vidbuffertype *GetBuffer(void);
+
+	void CaptureLoop(void);
 
  protected:
     
  private:
     void Initialize(void);
-
     bool Open(void);
+	
     void BufferIt(unsigned char *buf, int len = -1);
     
     bool playing;
@@ -52,6 +62,8 @@ class VideoInput
     int h_out;
 
     int channelfd;
+	
+	SDL_Thread *thread;
 };
 
 #endif
