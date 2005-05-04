@@ -63,7 +63,6 @@ int GameController::InitializeVideoOut(void)
 {
 	cout << "GameController: Setting up the output video texture\n";
 
-    // adjust texture to video file (256 is standard (see declaration above))
     if (videobuffer->w > 256 && videobuffer->w <= 512)
       tex_w = 512;
     else if (videobuffer->w > 512 && videobuffer->w <= 1024)
@@ -87,7 +86,7 @@ int GameController::InitializeVideoOut(void)
 
     ui_image_copy = new uint8_t[tex_w*tex_h*sizeof(uint8_t)];
 
-    /* create texture transform matrix (avi file must not be 2^n by 2^m but a texture has to be) */
+	// Create a texture matrix that will make the video scale properly to the size of the texture
     tex_mat = new GLdouble[16];
     for (int i=0; i<16; ++i) tex_mat[i] = 0.0;
     tex_mat[0]  = tex_param_s;
@@ -104,11 +103,11 @@ int GameController::InitializeVideoOut(void)
 
 	atexit(SDL_Quit);
 
-	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);		//Use at least 5 bits of Red
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);	//Use at least 5 bits of Green
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);		//Use at least 5 bits of Blue
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5); //Use at least 5 bits of Red
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5); //Use at least 5 bits of Green
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5); //Use at least 5 bits of Blue
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);	//Use at least 16 bits for the depth buffer
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);	//Enable double buffering
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); //Enable double buffering
 
 	int flags = SDL_OPENGLBLIT;
 
@@ -118,16 +117,7 @@ int GameController::InitializeVideoOut(void)
 		return -1;
 	}	
 
-	glViewport(0,0,800,600);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
-	glOrtho(0.0f, 800, 600, 0.0f, -1.0f, 1.0f);
-	
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glClearColor(0.0f,0.0f,0.0f,0.5f);
+	glClearColor(0.5f,0.5f,0.5f,0.5f);
 	glClearDepth(1.0f);
 	glDepthFunc(GL_LEQUAL);	
 	glEnable(GL_DEPTH_TEST);
@@ -135,26 +125,34 @@ int GameController::InitializeVideoOut(void)
 	glDisable(GL_CULL_FACE);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-	glGenTextures(1, &texture);               // generate OpenGL texture object
+	glGenTextures(1, &texture);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture( GL_TEXTURE_2D, texture );  // use previously created texture object and set options
+	glBindTexture(GL_TEXTURE_2D, texture );
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);  // how to set texture coords
+	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
 	glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
 
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	glOrtho(-2.0f, 2.0f, 2.0f, -2.0f, -2.0f, 2.0f);
+	
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
 	// display lists are much faster than drawing directly
-	cube_list = glGenLists(1); // generate display list
-	glNewList(cube_list, GL_COMPILE_AND_EXECUTE);  // fill display list
-	glBegin(GL_QUADS);										// Begin Drawing A Cube
+	cube_list = glGenLists(1);
+	glNewList(cube_list, GL_COMPILE_AND_EXECUTE);
+	glBegin(GL_QUADS);
 		// Front Face
-		glNormal3f( 0.0f, 0.0f, 0.5f);
+		glNormal3f(0.0f, 0.0f, 0.5f);
 		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);
 		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);
 		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);
 		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);
 		// Back Face
-		glNormal3f( 0.0f, 0.0f,-0.5f);
+		glNormal3f(0.0f, 0.0f,-0.5f);
 		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
 		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);
 		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);
@@ -183,11 +181,10 @@ int GameController::InitializeVideoOut(void)
 		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);
 		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);
 		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);
-	glEnd();												// Done Drawing Our Cube
+	glEnd();
 	glEndList();
 
 	// set texture transform matrix to alter (here only to scale) texture coordinates
-	// (our video stream must not be 2^n by 2^m but our texture has to be)
 	glMatrixMode(GL_TEXTURE);
 	glLoadMatrixd(tex_mat);
 	glMatrixMode(GL_MODELVIEW);
@@ -198,10 +195,17 @@ bool GameController::Draw(void)
 	//Make certain everything is cleared from the screen before we draw to it
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glLoadIdentity();	     // Reset The Modelview Matrix
-	glCallList(cube_list);   // Draw cube via display list
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, tex_w, tex_h, 0,
+                 GL_LUMINANCE, GL_UNSIGNED_BYTE, videobuffer->buffer);
+	
+	glLoadIdentity();
 
-	//Flip the backbuffer to the primary
+	glRotatef(2.0f, 1.0f, 0.0f, 0.0f);
+	glRotatef(0.5f, 0.0f, 1.0f, 0.0f);
+	glRotatef(1.0f, 0.0f, 0.0f, 1.0f);
+
+	glCallList(cube_list);
+
 	SDL_GL_SwapBuffers();
 
 	return true;
