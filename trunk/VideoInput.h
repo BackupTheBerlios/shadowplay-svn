@@ -11,59 +11,59 @@
 
 using namespace std;
 
-typedef struct vidbuffertype
+struct vidbuffertype
 {
-    unsigned char *buffer;
-    int bufferlen;
+	int bufferlen;
 	int w;
 	int h;
-} vidbuffertyp;
+	unsigned char *buffer;
+};
 
 extern "C" int CaptureThread(void *);
 
 class VideoInput
 {
- public:
-    VideoInput(int in_w, int in_h);
-   ~VideoInput();
+	public:
+		VideoInput(int in_w, int in_h);
+		~VideoInput();
 
-	void StartPlaying(void);
-	void StopPlaying(void);
-	vidbuffertype *GetBuffer(void);
+		void StartPlaying(void);
+		void StopPlaying(void);
+		vidbuffertype *GetBuffer(void);
 
-	void CaptureLoop(void);
+		void CaptureLoop(void);
 
- protected:
-    
- private:
-    void Initialize(void);
-    bool Open(void);
-	
-    void BufferIt(unsigned char *buf, int len = -1);
-    
-    bool playing;
-    bool errored;
-    
-    int fd;
-    int w, h;
-    int inputchannel;
+	protected:
 
-    int usebttv;
-    float video_aspect;
+	private:
+		void Initialize(void);
+		bool Open(void);
 
-    vidbuffertype *videobuffer;
+		void BufferIt(unsigned char *buf);
 
-    int act_video_buffer;
+		bool playing;
+		bool errored;
 
-    int video_buffer_count;
-    long video_buffer_size;
+		int fd;
+		int w, h;
+		int inputchannel;
 
-    int w_out;
-    int h_out;
+		int usebttv;
+		float video_aspect;
 
-    int channelfd;
-	
-	SDL_Thread *thread;
+		vidbuffertype *videobuffer;
+
+		int act_video_buffer;
+
+		int video_buffer_count;
+		long video_buffer_size;
+
+		int w_out;
+		int h_out;
+
+		int channelfd;
+
+		SDL_Thread *thread;
 };
 
 #endif

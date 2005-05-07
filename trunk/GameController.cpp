@@ -111,13 +111,13 @@ int GameController::InitializeVideoOut(void)
 
 	int flags = SDL_OPENGLBLIT;
 
-	screen = SDL_SetVideoMode(800, 600, 16, flags);
+	screen = SDL_SetVideoMode(640, 480, 16, flags);
 	if( !screen ) {
 		cout << "GameController: Couldn't create a surface: " << SDL_GetError() << endl;
 		return -1;
 	}	
 
-	glClearColor(0.5f,0.5f,0.5f,0.5f);
+	glClearColor(1.0f,1.0f,1.0f,1.0f);
 	glClearDepth(1.0f);
 	glDepthFunc(GL_LEQUAL);	
 	glEnable(GL_DEPTH_TEST);
@@ -127,7 +127,7 @@ int GameController::InitializeVideoOut(void)
 
 	glGenTextures(1, &texture);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, texture );
+	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
@@ -136,7 +136,7 @@ int GameController::InitializeVideoOut(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	glOrtho(-2.0f, 2.0f, 2.0f, -2.0f, -2.0f, 2.0f);
+	glOrtho(-320.0f, 320.0f, 240.0f, -240.0f, -340.0f, 340.0f);
 	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -184,7 +184,7 @@ int GameController::InitializeVideoOut(void)
 	glEnd();
 	glEndList();
 
-	// set texture transform matrix to alter (here only to scale) texture coordinates
+	//Set texture transform matrix to alter (here only to scale) texture coordinates
 	glMatrixMode(GL_TEXTURE);
 	glLoadMatrixd(tex_mat);
 	glMatrixMode(GL_MODELVIEW);
@@ -192,19 +192,22 @@ int GameController::InitializeVideoOut(void)
 
 bool GameController::Draw(void)
 {
-	//Make certain everything is cleared from the screen before we draw to it
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//memcpy(ui_image_copy, videobuffer->buffer, sizeof(uint8_t)*videobuffer->bufferlen);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, tex_w, tex_h, 0,
+    //             GL_LUMINANCE, GL_UNSIGNED_BYTE, ui_image_copy);
                  GL_LUMINANCE, GL_UNSIGNED_BYTE, videobuffer->buffer);
-	
+
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
 	glLoadIdentity();
 
-	glRotatef(2.0f, 1.0f, 0.0f, 0.0f);
-	glRotatef(0.5f, 0.0f, 1.0f, 0.0f);
-	glRotatef(1.0f, 0.0f, 0.0f, 1.0f);
-
-	glCallList(cube_list);
+	glBegin(GL_QUADS);
+		glTexCoord2f(1, 1); glVertex3f( 320.0f,  240.0f, -320.0f);
+		glTexCoord2f(0, 1);	glVertex3f(-320.0f,  240.0f, -320.0f);
+		glTexCoord2f(0, 0);	glVertex3f(-320.0f, -240.0f, -320.0f);
+		glTexCoord2f(1, 0);	glVertex3f( 320.0f, -240.0f, -320.0f);
+	glEnd();
 
 	SDL_GL_SwapBuffers();
 
@@ -213,5 +216,5 @@ bool GameController::Draw(void)
 
 void GameController::StopPlaying(void)
 {
-	running = false;
+		running = false;
 }
