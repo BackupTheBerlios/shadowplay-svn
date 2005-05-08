@@ -1,5 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
 #include <string.h>
 #include <assert.h>
 
@@ -22,7 +23,7 @@
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
-void VideoInput::VideoInput(int in_w, int in_h)
+VideoInput::VideoInput(int in_w, int in_h)
 {
 	w = in_w;
 	h = in_h;
@@ -32,6 +33,7 @@ void VideoInput::VideoInput(int in_w, int in_h)
 	io	= IO_METHOD_MMAP;
 	fd = -1;
 	buffers = NULL;
+	videobuffer = NULL;
 	n_buffers = 0;
 
 	errored = false;
@@ -42,7 +44,7 @@ void VideoInput::VideoInput(int in_w, int in_h)
 	StartCapturing();
 }
 
-void VideoInput::~VideoInput(void)
+VideoInput::~VideoInput(void)
 {
 	StopCapturing();
 	UninitDevice();
@@ -51,7 +53,7 @@ void VideoInput::~VideoInput(void)
 
 vidbuffertype *VideoInput::GetBuffer(void)
 {
-	return buffers[1];
+	return videobuffer;
 }
 
 void VideoInput::StopPlaying(void)
@@ -97,8 +99,9 @@ int VideoInput::Xioctl(int request, void *arg)
 
 void VideoInput::ProcessImage(const void *p)
 {
-	fputc('.', stdout);
-	fflush(stdout);
+
+	memcpy(videobuffer->buffer, p,
+			videobuffer->bufferlen);
 }
 
 int VideoInput::ReadFrame(void)
@@ -109,10 +112,10 @@ int VideoInput::ReadFrame(void)
 	switch (io)
 	{
 		case IO_METHOD_READ:
-			if (-1 == read(fd, buffers[0].start, buffers[0].length))
+			if (-1 == read(fd, buffers[0].buffer, buffers[0].bufferlen))
 				ErrnoError("read");
 
-			ProcessImage(buffers[0].start);
+			ProcessImage(buffers[0].buffer);
 			break;
 
 		case IO_METHOD_MMAP:
@@ -126,7 +129,7 @@ int VideoInput::ReadFrame(void)
 
 			assert(buf.index < n_buffers);
 
-			ProcessImage(buffers[buf.index].start);
+			ProcessImage(buffers[buf.index].buffer);
 
 			if (-1 == Xioctl(VIDIOC_QBUF, &buf))
 				ErrnoError("VIDIOC_QBUF");
@@ -156,14 +159,16 @@ void VideoInput::MainLoop(void)
 
 			r = select(fd + 1, &fds, NULL, NULL, &tv);
 
-			if (-1 == r) {
+			if (-1 == r)
+			{
 				if (EINTR == errno)
 					continue;
 
 				ErrnoError("select");
 			}
 
-			if (0 == r) {
+			if (0 == r)
+			{
 				cout << "VideoInput: select timeout\n";
 				errored = true;
 			}
@@ -190,7 +195,7 @@ void VideoInput::StopCapturing(void)
 			type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
 			if (-1 == Xioctl(VIDIOC_STREAMOFF, &type))
-				errno_exit ("VIDIOC_STREAMOFF");
+				ErrnoError("VIDIOC_STREAMOFF");
 
 			break;
 	}
@@ -212,7 +217,7 @@ void VideoInput::StartCapturing(void)
 			{
 				struct v4l2_buffer buf;
 
-				CLEAR (buf);
+				CLEAR(buf);
 
 				buf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 				buf.memory = V4L2_MEMORY_MMAP;
@@ -238,12 +243,12 @@ void VideoInput::UninitDevice(void)
 	switch (io)
 	{
 		case IO_METHOD_READ:
-			free(buffers[0].start);
+			free(buffers[0].buffer);
 			break;
 
 		case IO_METHOD_MMAP:
 			for (i = 0; i < n_buffers; ++i)
-				if (-1 == munmap (buffers[i].start, buffers[i].length))
+				if (-1 == munmap(buffers[i].buffer, buffers[i].bufferlen))
 					ErrnoError("munmap");
 			break;
 	}
@@ -253,18 +258,12 @@ void VideoInput::UninitDevice(void)
 
 void VideoInput::InitRead(unsigned int buffer_size)
 {
-	buffers = calloc(1, sizeof(*buffers));
+	buffers = (vidbuffertype *)calloc(1, sizeof(*buffers));
 
-	if (!buffers)
-	{
-		cout << "VideoInput: Out of memory (1)\n";
-		errored = true;
-	}
+	buffers[0].bufferlen = buffer_size;
+	buffers[0].buffer = (unsigned char *)malloc(buffer_size);
 
-	buffers[0].length = buffer_size;
-	buffers[0].start = malloc(buffer_size);
-
-	if (!buffers[0].start)
+	if (!buffers[0].buffer)
 	{
 		cout << "VideoInput: Out of memory (2)\n";
 		errored = true;
@@ -288,19 +287,19 @@ void VideoInput::InitMmap(void)
 			cout << "VideoInput: " << dev_name;
 			cout << " does not support memory mapping\n";
 			errored = true;
-		} else {
-			ErrnoErrored("VIDIOC_REQBUFS");
 		}
+		else
+			ErrnoError("VIDIOC_REQBUFS");
 	}
 
 	if (req.count < 2)
 	{
-		cout << "VideoInput: Insufficient buffer memory on "
-			cout << dev_name << endl;;
+		cout << "VideoInput: Insufficient buffer memory on ";
+		cout << dev_name << endl;
 		errored = true;
 	}
 
-	buffers = calloc (req.count, sizeof (*buffers));
+	buffers = (vidbuffertype *)calloc(req.count, sizeof(*buffers));
 
 	if (!buffers)
 	{
@@ -321,11 +320,13 @@ void VideoInput::InitMmap(void)
 		if (-1 == Xioctl(VIDIOC_QUERYBUF, &buf))
 			ErrnoError("VIDIOC_QUERYBUF");
 
-		buffers[n_buffers].length = buf.length;
-		buffers[n_buffers].start = mmap(NULL, buf.length,
-				PROT_READ|PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
+		buffers[n_buffers].bufferlen = buf.length;
+		buffers[n_buffers].buffer = (unsigned char*)
+				mmap(NULL, buf.length,
+				PROT_READ|PROT_WRITE, MAP_SHARED,
+				fd, buf.m.offset);
 
-		if (MAP_FAILED == buffers[n_buffers].start)
+		if (MAP_FAILED == buffers[n_buffers].buffer)
 			ErrnoError("mmap");
 	}
 }
@@ -413,6 +414,11 @@ void VideoInput::InitDevice(void)
 	if (fmt.fmt.pix.sizeimage < min)
 		fmt.fmt.pix.sizeimage = min;
 
+	w = fmt.fmt.pix.width;
+	h = fmt.fmt.pix.height;
+	cout << "VideoInput: New image size: ";
+	cout << w << "x" << h << endl;
+
 	switch (io)
 	{
 		case IO_METHOD_READ:
@@ -438,17 +444,26 @@ void VideoInput::OpenDevice(void)
 	struct stat st; 
 
 	if (-1 == stat(dev_name, &st))
-		ErrnoError("Cannot identify '"+dev_name+"'");
+	{
+		cout << "VideoInput: Cannont identify ";
+		cout << dev_name << endl;
+		errored = true;
+	}
 
 	if (!S_ISCHR (st.st_mode))
 	{
-		cout << "VideoInput: " << dev_name << " is not a device\n";
+		cout << "VideoInput: " << dev_name;
+		cout << " is not a device\n";
 		errored = true;
 	}
 
 	fd = open(dev_name, O_RDWR|O_NONBLOCK, 0);
 
 	if (-1 == fd)
-		ErrnoError("Could not open '"+dev_name+"'");
+	{
+		cout << "VideoInput: Could not open ";
+		cout << dev_name << endl;
+		errored = true;
+	}
 }
 

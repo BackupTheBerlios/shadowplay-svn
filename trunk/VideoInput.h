@@ -12,14 +12,20 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <time.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
+
+#include <vector>
 
 #include <asm/types.h>
 #include <linux/videodev2.h>
 
 #include "SDL.h"
 #include "SDL_thread.h"
+#include <pthread.h>
+
+
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
@@ -28,7 +34,7 @@ typedef enum {
 	IO_METHOD_MMAP,
 } io_method;
 
-struct videobuffertype {
+struct vidbuffertype {
 	unsigned char *buffer;
 	int bufferlen;
 	int w, h;
@@ -42,7 +48,7 @@ class VideoInput
 {
 	public:
 		VideoInput(int in_w, int in_h);
-		~VideoInput();
+		~VideoInput(void);
 
 		void StartPlaying(void);
 		void StopPlaying(void);
@@ -64,7 +70,7 @@ class VideoInput
 		void InitMmap(void);
 		void InitDevice(void);
 		void OpenDevice(void);
-		void VideoInput(int in_w, int in_h);
+		void CloseDevice(void);
 
 		bool playing;
 		bool errored;
@@ -76,8 +82,8 @@ class VideoInput
 
 		char *dev_name;
 		io_method io;
-		int fd;
-		videobuffertype *buffers;
+		vidbuffertype *buffers;
+		vidbuffertype *videobuffer;
 		unsigned int n_buffers;
 };
 
