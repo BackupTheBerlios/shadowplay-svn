@@ -15,26 +15,67 @@
 #include <asm/types.h>
 #include <linux/videodev2.h>
 
+#include "SDL.h"
+#include "SDL_thread.h"
+
+#include "VideoInput.h"
+
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
-typedef enum {
-	IO_METHOD_READ,
-	IO_METHOD_MMAP,
-} io_method;
+void VideoInput::VideoInput(int in_w, int in_h)
+{
+	w = in_w;
+	h = in_h;
 
-struct videobuffertype {
-	unsigned char *buffer;
-	int bufferlen;
-	int w, h;
-};
+	dev_name = "/dev/video0";
 
-char *dev_name = NULL;
-io_method io	= IO_METHOD_MMAP;
-int fd = -1;
-videobuffertype *buffers = NULL;
-unsigned int n_buffers = 0;
-bool errored = false;
-bool playing = false;
+	io	= IO_METHOD_MMAP;
+	fd = -1;
+	buffers = NULL;
+	n_buffers = 0;
+
+	errored = false;
+	playing = false;
+
+	OpenDevice();
+	InitDevice();
+	StartCapturing();
+}
+
+void VideoInput::~VideoInput(void)
+{
+	StopCapturing();
+	UninitDevice();
+	CloseDevice();
+}
+
+vidbuffertype *VideoInput::GetBuffer(void)
+{
+	return buffers[1];
+}
+
+void VideoInput::StopPlaying(void)
+{
+	playing = false;
+	SDL_WaitThread(thread, NULL);
+}
+
+void VideoInput::StartPlaying(void)
+{
+	thread = SDL_CreateThread(CaptureThread,
+			static_cast<void *>(this));
+	if (thread == NULL)
+	{
+		cout << "VideoInput: Unable to create thread: ";
+		cout << SDL_GetError() << endl;
+	}
+}
+
+	extern "C"
+int CaptureThread(void *vi)
+{
+	static_cast<VideoInput *>(vi)->MainLoop();
+}
 
 void VideoInput::ErrnoError(const char *s)
 {
@@ -255,7 +296,7 @@ void VideoInput::InitMmap(void)
 	if (req.count < 2)
 	{
 		cout << "VideoInput: Insufficient buffer memory on "
-		cout << dev_name << endl;;
+			cout << dev_name << endl;;
 		errored = true;
 	}
 
@@ -411,18 +452,3 @@ void VideoInput::OpenDevice(void)
 		ErrnoError("Could not open '"+dev_name+"'");
 }
 
-void VideoInput::VideoInput(int in_w, int in_h)
-{
-	dev_name = "/dev/video0";
-
-	w = in_w;
-	h = in_h;
-
-	OpenDevice();
-	InitDevice();
-	StartCapturing();
-	MainLoop();
-	StopCapturing();
-	UninitDevice();
-	CloseDevice();
-}
