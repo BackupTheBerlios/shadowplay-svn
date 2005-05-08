@@ -419,6 +419,12 @@ void VideoInput::InitDevice(void)
 	cout << "VideoInput: New image size: ";
 	cout << w << "x" << h << endl;
 
+	videobuffer = new vidbuffertype;
+	videobuffer->buffer = new unsigned char [w*h];
+	videobuffer->w = w;
+	videobuffer->h = h;
+	videobuffer->bufferlen = w*h;
+
 	switch (io)
 	{
 		case IO_METHOD_READ:
