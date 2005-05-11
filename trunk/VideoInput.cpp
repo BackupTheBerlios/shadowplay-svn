@@ -30,7 +30,7 @@ VideoInput::VideoInput(int in_w, int in_h)
 
 	dev_name = "/dev/video0";
 
-	io	= IO_METHOD_MMAP;
+	io	= IO_METHOD_READ;
 	fd = -1;
 	buffers = NULL;
 	videobuffer = NULL;
@@ -261,7 +261,7 @@ void VideoInput::InitRead(unsigned int buffer_size)
 	buffers = (vidbuffertype *)calloc(1, sizeof(*buffers));
 
 	buffers[0].bufferlen = buffer_size;
-	buffers[0].buffer = (unsigned char *)malloc(buffer_size);
+	buffers[0].buffer = malloc(buffer_size);
 
 	if (!buffers[0].buffer)
 	{
@@ -321,8 +321,7 @@ void VideoInput::InitMmap(void)
 			ErrnoError("VIDIOC_QUERYBUF");
 
 		buffers[n_buffers].bufferlen = buf.length;
-		buffers[n_buffers].buffer = (unsigned char*)
-				mmap(NULL, buf.length,
+		buffers[n_buffers].buffer = mmap(NULL, buf.length,
 				PROT_READ|PROT_WRITE, MAP_SHARED,
 				fd, buf.m.offset);
 
@@ -420,10 +419,14 @@ void VideoInput::InitDevice(void)
 	cout << w << "x" << h << endl;
 
 	videobuffer = new vidbuffertype;
-	videobuffer->buffer = new unsigned char [w*h];
+	videobuffer->buffer = malloc(w*h);
 	videobuffer->w = w;
 	videobuffer->h = h;
 	videobuffer->bufferlen = w*h;
+	cout << "VideoInput: videobuffer address: ";
+	cout << videobuffer << endl;
+	cout << "VideoInput: videobuffer->buffer address: ";
+	cout << videobuffer->buffer << endl;
 
 	switch (io)
 	{
@@ -435,6 +438,7 @@ void VideoInput::InitDevice(void)
 			InitMmap();
 			break;
 	}
+	cout << "VideoInput: buffers: " << buffers << endl;
 }
 
 void VideoInput::CloseDevice(void)

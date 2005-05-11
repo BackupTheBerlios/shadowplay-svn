@@ -35,7 +35,7 @@ typedef enum {
 } io_method;
 
 struct vidbuffertype {
-	unsigned char *buffer;
+	void *buffer;
 	int bufferlen;
 	int w, h;
 };
