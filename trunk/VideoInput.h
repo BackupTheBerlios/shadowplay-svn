@@ -29,13 +29,15 @@
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
-typedef enum {
+typedef enum
+{
 	IO_METHOD_READ,
 	IO_METHOD_MMAP,
 } io_method;
 
-struct vidbuffertype {
-	void *buffer;
+struct vidbuffertype
+{
+	uint8_t *buffer;
 	int bufferlen;
 	int w, h;
 };

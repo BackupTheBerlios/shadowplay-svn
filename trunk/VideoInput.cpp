@@ -30,7 +30,7 @@ VideoInput::VideoInput(int in_w, int in_h)
 
 	dev_name = "/dev/video0";
 
-	io	= IO_METHOD_READ;
+	io	= IO_METHOD_MMAP;
 	fd = -1;
 	buffers = NULL;
 	videobuffer = NULL;
@@ -243,25 +243,26 @@ void VideoInput::UninitDevice(void)
 	switch (io)
 	{
 		case IO_METHOD_READ:
-			free(buffers[0].buffer);
+			delete buffers[0].buffer;
 			break;
 
 		case IO_METHOD_MMAP:
 			for (i = 0; i < n_buffers; ++i)
 				if (-1 == munmap(buffers[i].buffer, buffers[i].bufferlen))
-					ErrnoError("munmap");
+					ErrnoError("Munmap");
 			break;
 	}
 
-	free(buffers);
+	delete buffers;
+	buffers = NULL;
 }
 
 void VideoInput::InitRead(unsigned int buffer_size)
 {
-	buffers = (vidbuffertype *)calloc(1, sizeof(*buffers));
+	buffers = new vidbuffertype	[1];
 
 	buffers[0].bufferlen = buffer_size;
-	buffers[0].buffer = malloc(buffer_size);
+	buffers[0].buffer = new uint8_t [buffer_size];
 
 	if (!buffers[0].buffer)
 	{
@@ -299,7 +300,7 @@ void VideoInput::InitMmap(void)
 		errored = true;
 	}
 
-	buffers = (vidbuffertype *)calloc(req.count, sizeof(*buffers));
+	buffers = new vidbuffertype	[req.count];
 
 	if (!buffers)
 	{
@@ -321,7 +322,8 @@ void VideoInput::InitMmap(void)
 			ErrnoError("VIDIOC_QUERYBUF");
 
 		buffers[n_buffers].bufferlen = buf.length;
-		buffers[n_buffers].buffer = mmap(NULL, buf.length,
+		buffers[n_buffers].buffer = (uint8_t *)
+				mmap(NULL, buf.length,
 				PROT_READ|PROT_WRITE, MAP_SHARED,
 				fd, buf.m.offset);
 
@@ -419,7 +421,7 @@ void VideoInput::InitDevice(void)
 	cout << w << "x" << h << endl;
 
 	videobuffer = new vidbuffertype;
-	videobuffer->buffer = malloc(w*h);
+	videobuffer->buffer = new uint8_t [w*h];
 	videobuffer->w = w;
 	videobuffer->h = h;
 	videobuffer->bufferlen = w*h;

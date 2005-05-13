@@ -103,16 +103,17 @@ int GameController::InitializeVideoOut(void)
 
 	atexit(SDL_Quit);
 
-	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5); //Use at least 5 bits of Red
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5); //Use at least 5 bits of Green
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5); //Use at least 5 bits of Blue
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);	//Use at least 16 bits for the depth buffer
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); //Enable double buffering
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	int flags = SDL_OPENGLBLIT;
 
 	screen = SDL_SetVideoMode(640, 480, 16, flags);
-	if( !screen ) {
+	if( !screen )
+	{
 		cout << "GameController: Couldn't create a surface: " << SDL_GetError() << endl;
 		return -1;
 	}	
@@ -141,7 +142,6 @@ int GameController::InitializeVideoOut(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	// display lists are much faster than drawing directly
 	cube_list = glGenLists(1);
 	glNewList(cube_list, GL_COMPILE_AND_EXECUTE);
 	glBegin(GL_QUADS);
@@ -192,11 +192,11 @@ int GameController::InitializeVideoOut(void)
 
 bool GameController::Draw(void)
 {
-	//memcpy(ui_image_copy, videobuffer->buffer, sizeof(uint8_t)*videobuffer->bufferlen);
+	memcpy(ui_image_copy, videobuffer->buffer, sizeof(uint8_t)*videobuffer->bufferlen);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, tex_w, tex_h, 0,
-    //             GL_LUMINANCE, GL_UNSIGNED_BYTE, ui_image_copy);
-                 GL_LUMINANCE, GL_UNSIGNED_BYTE, videobuffer->buffer);
+                 GL_LUMINANCE, GL_UNSIGNED_BYTE, ui_image_copy);
+    //             GL_LUMINANCE, GL_UNSIGNED_BYTE, videobuffer->buffer);
 
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
