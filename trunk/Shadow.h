@@ -5,7 +5,16 @@
 #include "SDL.h"
 #include "SDL_thread.h"
 
+struct shadowtype
+{
+	bool *buffer;
+	int bufferlen;
+	int w, h;
+};
+
 class VideoInput;
+
+extern "C" int ShadowThread(void *);
 
 class Shadow
 {
@@ -14,16 +23,21 @@ class Shadow
 	~Shadow(void);
 
 	vidbuffertype *GetBuffer(void);
+	shadowtype *GetShadow(void);
 	void StartPlaying(void);
 	void StopPlaying(void);
+
+	void MainLoop(void);
 
   private:
 	VideoInput *videoinput;
 
 	vidbuffertype *videobuffer;
-	SDL_Thread *thread;
+	shadowtype *shadowbuffer;
 
-  protected:
+	SDL_Thread *thread;
+	
+	bool playing;
 };
 
 #endif

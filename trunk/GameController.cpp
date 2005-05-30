@@ -23,8 +23,8 @@ GameController::GameController(void)
 
 	videobuffer = shadow->GetBuffer();
 
-	out_w = 800;
-	out_h = 600;
+	out_w = 640;
+	out_h = 480;
 	tex_w = 256;
 	tex_h = 256;
 	tex_param_s = 1.0f;
@@ -38,9 +38,17 @@ GameController::GameController(void)
 	keyinput = new KeyInput(this);
 }
 
+GameController::~GameController(void)
+{
+	delete ui_image_copy;
+	delete tex_mat;
+	delete shadow;
+}
+
 void GameController::StartPlaying(void)
 {
     running = true;
+	shadow->StartPlaying();
 
 	cout << "GameController: Entering the event loop\n";
 	while (running)
@@ -52,11 +60,9 @@ void GameController::StartPlaying(void)
 	shadow->StopPlaying();
 }
 
-GameController::~GameController(void)
+void GameController::StopPlaying(void)
 {
-	delete ui_image_copy;
-	delete tex_mat;
-	delete shadow;
+		running = false;
 }
 
 int GameController::InitializeVideoOut(void)
@@ -82,13 +88,14 @@ int GameController::InitializeVideoOut(void)
 	cout << "GameController: Texture size: " << tex_w << "x" << tex_h << endl;
 
     tex_param_s = static_cast<GLfloat>(videobuffer->w)  / static_cast<GLfloat>(tex_w);
-    tex_param_t = static_cast<GLfloat>(videobuffer->w) / static_cast<GLfloat>(tex_h);
+    tex_param_t = static_cast<GLfloat>(videobuffer->h) / static_cast<GLfloat>(tex_h);
 
     ui_image_copy = new uint8_t[tex_w*tex_h*sizeof(uint8_t)];
 
 	// Create a texture matrix that will make the video scale properly to the size of the texture
     tex_mat = new GLdouble[16];
-    for (int i=0; i<16; ++i) tex_mat[i] = 0.0;
+    for (int i=0; i<16; ++i)
+		tex_mat[i] = 0.0;
     tex_mat[0]  = tex_param_s;
     tex_mat[5]  = tex_param_t;
     tex_mat[10] = tex_mat[15] = 1.0;
@@ -96,7 +103,8 @@ int GameController::InitializeVideoOut(void)
 
 	SDL_Surface* screen;
 
-    if( SDL_Init(SDL_INIT_VIDEO) < 0 ) { 
+    if( SDL_Init(SDL_INIT_VIDEO) < 0 )
+	{ 
         cout << "GameController: Could not initialize SDL: " << SDL_GetError() << endl;
         return -1; 
     }
@@ -111,7 +119,7 @@ int GameController::InitializeVideoOut(void)
 
 	int flags = SDL_OPENGLBLIT;
 
-	screen = SDL_SetVideoMode(640, 480, 16, flags);
+	screen = SDL_SetVideoMode(out_w, out_h, 16, flags);
 	if( !screen )
 	{
 		cout << "GameController: Couldn't create a surface: " << SDL_GetError() << endl;
@@ -192,21 +200,25 @@ int GameController::InitializeVideoOut(void)
 
 bool GameController::Draw(void)
 {
-	memcpy(ui_image_copy, videobuffer->buffer, sizeof(uint8_t)*videobuffer->bufferlen);
+    for (int j=0; j < videobuffer->h; ++j)
+        memcpy(&ui_image_copy[j*tex_w], &videobuffer->buffer[j*videobuffer->w], videobuffer->w);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, tex_w, tex_h, 0,
                  GL_LUMINANCE, GL_UNSIGNED_BYTE, ui_image_copy);
-    //             GL_LUMINANCE, GL_UNSIGNED_BYTE, videobuffer->buffer);
 
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 	glLoadIdentity();
 
 	glBegin(GL_QUADS);
-		glTexCoord2f(1, 1); glVertex3f( 320.0f,  240.0f, -320.0f);
-		glTexCoord2f(0, 1);	glVertex3f(-320.0f,  240.0f, -320.0f);
-		glTexCoord2f(0, 0);	glVertex3f(-320.0f, -240.0f, -320.0f);
-		glTexCoord2f(1, 0);	glVertex3f( 320.0f, -240.0f, -320.0f);
+		glTexCoord2f(1, 1);
+		glVertex3f( 320.0f,  240.0f, -320.0f);
+		glTexCoord2f(0, 1);
+		glVertex3f(-320.0f,  240.0f, -320.0f);
+		glTexCoord2f(0, 0);
+		glVertex3f(-320.0f, -240.0f, -320.0f);
+		glTexCoord2f(1, 0);
+		glVertex3f( 320.0f, -240.0f, -320.0f);
 	glEnd();
 
 	SDL_GL_SwapBuffers();
@@ -214,7 +226,3 @@ bool GameController::Draw(void)
 	return true;
 }
 
-void GameController::StopPlaying(void)
-{
-		running = false;
-}

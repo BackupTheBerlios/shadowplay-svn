@@ -23,9 +23,6 @@
 
 #include "SDL.h"
 #include "SDL_thread.h"
-#include <pthread.h>
-
-
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 

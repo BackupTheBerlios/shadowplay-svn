@@ -64,6 +64,8 @@ void VideoInput::StopPlaying(void)
 
 void VideoInput::StartPlaying(void)
 {
+	playing = true;
+	cout << "VideoInput: Trying to create capture thread\n";
 	thread = SDL_CreateThread(CaptureThread,
 			static_cast<void *>(this));
 	if (thread == NULL)
@@ -86,22 +88,9 @@ void VideoInput::ErrnoError(const char *s)
 	errored = true;
 }
 
-int VideoInput::Xioctl(int request, void *arg)
-{
-	int r;
-
-	do
-		r = ioctl(fd, request, arg);
-	while (-1 == r && EINTR == errno);
-
-	return r;
-}
-
 void VideoInput::ProcessImage(const void *p)
 {
-
-	memcpy(videobuffer->buffer, p,
-			videobuffer->bufferlen);
+	memcpy(videobuffer->buffer, p, videobuffer->bufferlen);
 }
 
 int VideoInput::ReadFrame(void)
@@ -112,10 +101,10 @@ int VideoInput::ReadFrame(void)
 	switch (io)
 	{
 		case IO_METHOD_READ:
-			if (-1 == read(fd, buffers[0].buffer, buffers[0].bufferlen))
+			if (-1 == read(fd, buffers->buffer, buffers[0].bufferlen))
 				ErrnoError("read");
 
-			ProcessImage(buffers[0].buffer);
+			ProcessImage(buffers->buffer);
 			break;
 
 		case IO_METHOD_MMAP:
@@ -127,6 +116,8 @@ int VideoInput::ReadFrame(void)
 			if (-1 == Xioctl(VIDIOC_DQBUF, &buf))
 				ErrnoError("VIDIOC_DQBUF");
 
+			if (buf.index >= n_buffers)
+				cout << "VideoInput: Index error\n";
 			assert(buf.index < n_buffers);
 
 			ProcessImage(buffers[buf.index].buffer);
@@ -142,43 +133,44 @@ int VideoInput::ReadFrame(void)
 
 void VideoInput::MainLoop(void)
 {
-	while (playing && !errored)
+	fd_set fds;
+	struct timeval tv;
+	int r;
+
+	cout << "VideoInput: Entering the main loop\n";
+
+	while (playing)
+	//while (playing && !errored)
 	{
-		for (;;)
+		FD_ZERO(&fds);
+		FD_SET(fd, &fds);
+
+		// Timeout
+		tv.tv_sec = 2;
+		tv.tv_usec = 0;
+
+		r = select(fd+1, &fds, NULL, NULL, &tv);
+
+		if (-1 == r)
 		{
-			fd_set fds;
-			struct timeval tv;
-			int r;
+			if (EINTR == errno)
+				continue;
 
-			FD_ZERO(&fds);
-			FD_SET(fd, &fds);
-
-			// Timeout
-			tv.tv_sec = 2;
-			tv.tv_usec = 0;
-
-			r = select(fd + 1, &fds, NULL, NULL, &tv);
-
-			if (-1 == r)
-			{
-				if (EINTR == errno)
-					continue;
-
-				ErrnoError("select");
-			}
-
-			if (0 == r)
-			{
-				cout << "VideoInput: select timeout\n";
-				errored = true;
-			}
-
-			if (ReadFrame())
-				break;
-
-			// EAGAIN - continue select loop
+			ErrnoError("select");
 		}
+
+		if (0 == r)
+		{
+			cout << "VideoInput: select timeout\n";
+			errored = true;
+		}
+
+		if (ReadFrame())
+			break;
+
+		// EAGAIN - continue select loop
 	}
+	cout << "VideoInput: Exiting the main loop\n";
 }
 
 void VideoInput::StopCapturing(void)
@@ -243,7 +235,7 @@ void VideoInput::UninitDevice(void)
 	switch (io)
 	{
 		case IO_METHOD_READ:
-			delete buffers[0].buffer;
+			delete buffers->buffer;
 			break;
 
 		case IO_METHOD_MMAP:
@@ -259,12 +251,12 @@ void VideoInput::UninitDevice(void)
 
 void VideoInput::InitRead(unsigned int buffer_size)
 {
-	buffers = new vidbuffertype	[1];
+	buffers = new vidbuffertype;
 
-	buffers[0].bufferlen = buffer_size;
-	buffers[0].buffer = new uint8_t [buffer_size];
+	buffers->bufferlen = buffer_size;
+	buffers->buffer = new uint8_t [buffer_size];
 
-	if (!buffers[0].buffer)
+	if (!buffers->buffer)
 	{
 		cout << "VideoInput: Out of memory (2)\n";
 		errored = true;
@@ -323,9 +315,9 @@ void VideoInput::InitMmap(void)
 
 		buffers[n_buffers].bufferlen = buf.length;
 		buffers[n_buffers].buffer = (uint8_t *)
-				mmap(NULL, buf.length,
-				PROT_READ|PROT_WRITE, MAP_SHARED,
-				fd, buf.m.offset);
+			mmap(NULL, buf.length,
+					PROT_READ|PROT_WRITE, MAP_SHARED,
+					fd, buf.m.offset);
 
 		if (MAP_FAILED == buffers[n_buffers].buffer)
 			ErrnoError("mmap");
@@ -381,7 +373,9 @@ void VideoInput::InitDevice(void)
 			break;
 	}
 
-	// Select video input, video standard and tune here
+	int input = 1;
+	if (-1 == Xioctl(VIDIOC_S_INPUT, &input))
+		cout << "VideoInput: Input select error\n";
 
 	cropcap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
@@ -399,7 +393,7 @@ void VideoInput::InitDevice(void)
 	fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	fmt.fmt.pix.width       = w; 
 	fmt.fmt.pix.height      = h;
-	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
+	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_GREY;
 	fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
 
 	if (-1 == Xioctl(VIDIOC_S_FMT, &fmt))
@@ -425,10 +419,6 @@ void VideoInput::InitDevice(void)
 	videobuffer->w = w;
 	videobuffer->h = h;
 	videobuffer->bufferlen = w*h;
-	cout << "VideoInput: videobuffer address: ";
-	cout << videobuffer << endl;
-	cout << "VideoInput: videobuffer->buffer address: ";
-	cout << videobuffer->buffer << endl;
 
 	switch (io)
 	{
@@ -440,7 +430,6 @@ void VideoInput::InitDevice(void)
 			InitMmap();
 			break;
 	}
-	cout << "VideoInput: buffers: " << buffers << endl;
 }
 
 void VideoInput::CloseDevice(void)
@@ -462,7 +451,7 @@ void VideoInput::OpenDevice(void)
 		errored = true;
 	}
 
-	if (!S_ISCHR (st.st_mode))
+	if (!S_ISCHR(st.st_mode))
 	{
 		cout << "VideoInput: " << dev_name;
 		cout << " is not a device\n";
@@ -477,5 +466,16 @@ void VideoInput::OpenDevice(void)
 		cout << dev_name << endl;
 		errored = true;
 	}
+}
+
+int VideoInput::Xioctl(int request, void *arg)
+{
+	int r;
+
+	do
+		r = ioctl(fd, request, arg);
+	while (-1 == r && EINTR == errno);
+
+	return r;
 }
 

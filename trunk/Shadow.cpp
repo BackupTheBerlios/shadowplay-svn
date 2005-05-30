@@ -26,6 +26,13 @@ Shadow::Shadow(int in_w, int in_h)
 	videobuffer = videoinput->GetBuffer();
 
 	thread = NULL;
+	playing = false;
+
+	shadowbuffer = new shadowtype;
+	shadowbuffer->buffer = new bool [videobuffer->w*videobuffer->h];
+	shadowbuffer->w = videobuffer->w;
+	shadowbuffer->h = videobuffer->h;
+	shadowbuffer->bufferlen = videobuffer->w*videobuffer->h;
 }
 
 Shadow::~Shadow(void)
@@ -35,18 +42,49 @@ Shadow::~Shadow(void)
 	delete videoinput;
 }
 
-void Shadow::StopPlaying(void)
-{
-	cout << "Shadow: Stopping videout\n";
-	videoinput->StopPlaying();
-}
-
 vidbuffertype *Shadow::GetBuffer(void)
 {
 	return videobuffer;
 }
 
+shadowtype *Shadow::GetShadow(void)
+{
+	return shadowbuffer;
+}
+
 void Shadow::StartPlaying(void)
 {
 	videoinput->StartPlaying();
+
+	playing = true;
+	cout << "Shadow: Trying to create shadow thread\n";
+	thread = SDL_CreateThread(ShadowThread,
+			static_cast<void *>(this));
+	if (thread == NULL)
+	{
+		cout << "Shadow: Unable to create thread: ";
+		cout << SDL_GetError() << endl;
+	}
+}
+
+void Shadow::StopPlaying(void)
+{
+	videoinput->StopPlaying();
+
+	playing = false;
+	SDL_WaitThread(thread, NULL);
+}
+
+	extern "C"
+int ShadowThread(void *s)
+{
+	static_cast<Shadow *>(s)->MainLoop();
+}
+
+
+void Shadow::MainLoop(void)
+{
+	while (playing)
+	{
+	}
 }
