@@ -28,6 +28,7 @@ class GameController
 	Shadow *shadow;
 	
 	vidbuffertype *videobuffer;
+	vidbuffertype *shadowbuffer;
 
 	int out_w;
 	int out_h;

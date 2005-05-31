@@ -2,8 +2,12 @@
 #define KEYINPUT_H
 
 #include "GameController.h"
+#include "SDL.h"
+#include "SDL_thread.h"
 
 class GameController;
+
+extern "C" int KeyInputThread(void *);
 
 class KeyInput
 {
@@ -11,12 +15,17 @@ class KeyInput
 	KeyInput(GameController *gc);
 	~KeyInput(void);
 
-	int CheckKeys(void);
+	void StartKeyInput(void);
+	void StopKeyInput(void);
+
+	void KeyLoop(void);
 
   private:
 	GameController *gamecontroller;
 
-  protected:
+	SDL_Thread *thread;
+
+	bool playing;
 };
 
 #endif

@@ -19,9 +19,10 @@ using namespace std;
 GameController::GameController(void)
 {
 	cout << "GameController: Creating the Shadow object\n";
-	shadow = new Shadow(640, 480);
+	shadow = new Shadow(320, 240);
 
 	videobuffer = shadow->GetBuffer();
+	shadowbuffer = shadow->GetShadow();
 
 	out_w = 640;
 	out_h = 480;
@@ -49,15 +50,16 @@ void GameController::StartPlaying(void)
 {
     running = true;
 	shadow->StartPlaying();
+	keyinput->StartKeyInput();
 
 	cout << "GameController: Entering the event loop\n";
 	while (running)
 	{
 		Draw();
-		keyinput->CheckKeys();
 	}
 	
 	shadow->StopPlaying();
+	keyinput->StopKeyInput();
 }
 
 void GameController::StopPlaying(void)
@@ -87,8 +89,8 @@ int GameController::InitializeVideoOut(void)
 	cout << "GameController: Output size: " << out_w << "x" << out_h << endl;
 	cout << "GameController: Texture size: " << tex_w << "x" << tex_h << endl;
 
-    tex_param_s = static_cast<GLfloat>(videobuffer->w)  / static_cast<GLfloat>(tex_w);
-    tex_param_t = static_cast<GLfloat>(videobuffer->h) / static_cast<GLfloat>(tex_h);
+    tex_param_s = static_cast<GLfloat>(videobuffer->w)/static_cast<GLfloat>(tex_w);
+    tex_param_t = static_cast<GLfloat>(videobuffer->h)/static_cast<GLfloat>(tex_h);
 
     ui_image_copy = new uint8_t[tex_w*tex_h*sizeof(uint8_t)];
 
@@ -96,7 +98,7 @@ int GameController::InitializeVideoOut(void)
     tex_mat = new GLdouble[16];
     for (int i=0; i<16; ++i)
 		tex_mat[i] = 0.0;
-    tex_mat[0]  = tex_param_s;
+    tex_mat[0]  = -1.0f*tex_param_s;
     tex_mat[5]  = tex_param_t;
     tex_mat[10] = tex_mat[15] = 1.0;
 
@@ -200,8 +202,10 @@ int GameController::InitializeVideoOut(void)
 
 bool GameController::Draw(void)
 {
-    for (int j=0; j < videobuffer->h; ++j)
-        memcpy(&ui_image_copy[j*tex_w], &videobuffer->buffer[j*videobuffer->w], videobuffer->w);
+//    for (int j=0; j < videobuffer->h; ++j)
+//        memcpy(&ui_image_copy[j*tex_w], &videobuffer->buffer[j*videobuffer->w], videobuffer->w);
+    for (int j=0; j < shadowbuffer->h; ++j)
+        memcpy(&ui_image_copy[j*tex_w+tex_w-shadowbuffer->w], &shadowbuffer->buffer[j*shadowbuffer->w], shadowbuffer->w);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, tex_w, tex_h, 0,
                  GL_LUMINANCE, GL_UNSIGNED_BYTE, ui_image_copy);

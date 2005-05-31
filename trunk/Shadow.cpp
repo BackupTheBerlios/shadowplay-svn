@@ -27,9 +27,10 @@ Shadow::Shadow(int in_w, int in_h)
 
 	thread = NULL;
 	playing = false;
+	threshold = 85;
 
-	shadowbuffer = new shadowtype;
-	shadowbuffer->buffer = new bool [videobuffer->w*videobuffer->h];
+	shadowbuffer = new vidbuffertype;
+	shadowbuffer->buffer = new uint8_t [videobuffer->w*videobuffer->h];
 	shadowbuffer->w = videobuffer->w;
 	shadowbuffer->h = videobuffer->h;
 	shadowbuffer->bufferlen = videobuffer->w*videobuffer->h;
@@ -42,12 +43,24 @@ Shadow::~Shadow(void)
 	delete videoinput;
 }
 
+int Shadow::IncThreshold(int inc)
+{
+	threshold += inc;
+
+	if (threshold <= 0)
+		threshold = 1;
+	if (threshold >= 255)
+		threshold = 254;
+
+	return threshold;
+}
+
 vidbuffertype *Shadow::GetBuffer(void)
 {
 	return videobuffer;
 }
 
-shadowtype *Shadow::GetShadow(void)
+vidbuffertype *Shadow::GetShadow(void)
 {
 	return shadowbuffer;
 }
@@ -84,7 +97,25 @@ int ShadowThread(void *s)
 
 void Shadow::MainLoop(void)
 {
+	nice(5);
+	
+	uint8_t *b = videobuffer->buffer;
+	int w = videobuffer->w;
+	int h = videobuffer->h;
+
 	while (playing)
 	{
+		for (int i=1; i < w - 1; i++)
+		{
+			for (int j=1; j < h - 1; j++)
+			{
+				if (b[i+j*w] + b[i+j*w+1] + b[i+j*w-1] +
+						b[i+(j-1)*w] + b[i+(j+1)*w] 
+						> threshold * 4.0f)
+					shadowbuffer->buffer[i+j*w] = 0;
+				else
+					shadowbuffer->buffer[i+j*w] = 255;
+			}
+		}
 	}
 }
