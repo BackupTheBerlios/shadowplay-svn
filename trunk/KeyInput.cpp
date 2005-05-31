@@ -57,10 +57,25 @@ void KeyInput::KeyLoop(void)
 		usleep(50);
 		while (SDL_PollEvent(&event))
 		{
-			switch(event.type)
+			switch (event.type)
 			{
 				case SDL_KEYDOWN:
-				case SDL_KEYUP:
+					switch (event.key.keysym.sym)
+					{
+						case SDLK_EQUALS:
+							gamecontroller->HandleKey(KEY_THRESH_UP);
+							break;
+						case SDLK_MINUS:
+							gamecontroller->HandleKey(KEY_THRESH_DOWN);
+							break;
+						case SDLK_i:
+							gamecontroller->HandleKey(KEY_VIDEO);
+							break;
+						case SDLK_ESCAPE:
+							cout << "KeyInput: Got a quit command\n";
+							gamecontroller->StopPlaying();
+							break;
+					}
 					break;
 				case SDL_QUIT:
 					cout << "KeyInput: Got a quit command\n";

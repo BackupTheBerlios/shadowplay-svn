@@ -18,6 +18,8 @@ class GameController
 	void StartPlaying(void);
 	void StopPlaying(void);
 
+	void HandleKey(int);
+
   private:
 	int InitializeVideoOut(void);
 	bool Draw(void);
@@ -30,6 +32,8 @@ class GameController
 	vidbuffertype *videobuffer;
 	vidbuffertype *shadowbuffer;
 
+	int displaytype;
+
 	int out_w;
 	int out_h;
 
@@ -40,7 +44,7 @@ class GameController
 	GLfloat aspect_ratio;
 	GLuint cube_list;
 	GLuint texture;
-	uint8_t *ui_image_copy;
+	uint8_t *teximage;
 
     GLdouble *tex_mat;
 

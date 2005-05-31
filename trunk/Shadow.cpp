@@ -27,7 +27,7 @@ Shadow::Shadow(int in_w, int in_h)
 
 	thread = NULL;
 	playing = false;
-	threshold = 85;
+	threshold = 75;
 
 	shadowbuffer = new vidbuffertype;
 	shadowbuffer->buffer = new uint8_t [videobuffer->w*videobuffer->h];
@@ -97,24 +97,27 @@ int ShadowThread(void *s)
 
 void Shadow::MainLoop(void)
 {
-	nice(5);
+	nice(10);
 	
 	uint8_t *b = videobuffer->buffer;
 	int w = videobuffer->w;
 	int h = videobuffer->h;
 
+	for (int i=0; i < w*h; i++)
+		shadowbuffer->buffer[i] = 255;
+
 	while (playing)
 	{
-		for (int i=1; i < w - 1; i++)
+		for (int i=7; i < w - 7; i++)
 		{
-			for (int j=1; j < h - 1; j++)
+			for (int j=5; j < h - 5; j++)
 			{
 				if (b[i+j*w] + b[i+j*w+1] + b[i+j*w-1] +
 						b[i+(j-1)*w] + b[i+(j+1)*w] 
-						> threshold * 4.0f)
-					shadowbuffer->buffer[i+j*w] = 0;
-				else
+						> threshold * 5.0f)
 					shadowbuffer->buffer[i+j*w] = 255;
+				else
+					shadowbuffer->buffer[i+j*w] = 0;
 			}
 		}
 	}
