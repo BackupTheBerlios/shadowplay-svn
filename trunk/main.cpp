@@ -1,16 +1,63 @@
 #include "GameController.h"
 #include "Sand.h"
 
+#include <getopt.h>
+
 #include <iostream>
 using namespace std;
 
-int main()
-{
-	cout << "main: Starting Shadowplay\n";
+static const char short_options [] = ":sh";
 
-	cout << "main: Creating the GameController object\n";
-	//GameController *gamecontroller = new GameController();
-	GameController *gamecontroller = new Sand();
+static const struct option long_options [] = {
+	{ "help",       no_argument,            NULL,           'h' },
+	{ "sand",       no_argument,            NULL,           's' },
+	{ 0, 0 }
+};
+
+int main(int argc, char **argv)
+{
+	cout << "Shadowplay v2 - Electric Boogaloo\n";
+	GameController *gamecontroller;
+
+	bool started = false;
+
+	for (;;)
+	{
+		int index;
+		int c = getopt_long (argc, argv,
+				short_options, long_options,
+				&index);
+
+		if (started == true || c < 0)
+			break;
+
+		switch (c)
+		{
+			case 0:
+				break;
+
+			case 's':
+				cout << "main: Creating the Sand object\n";
+				gamecontroller = new Sand();
+				started = true;
+				break;
+
+			case 'h':
+				cout << "-s | --sand	Play with sand as it falls\n";
+				exit(EXIT_SUCCESS);
+
+			default:
+				break;
+		}
+	}
+
+	if (started == false)
+	{
+		cout << "main: Creating the GameController object\n";
+		gamecontroller = new GameController();
+	}
+
+
 	cout << "main: Starting to play\n";
 	gamecontroller->StartPlaying();
 

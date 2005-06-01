@@ -20,7 +20,6 @@ using namespace std;
 
 Shadow::Shadow(int in_w, int in_h)
 {
-	cout << "Shadow: Creating the VideoInput object\n";
 	videoinput = new VideoInput(in_w, in_h);
 	
 	videobuffer = videoinput->GetBuffer();
@@ -38,7 +37,6 @@ Shadow::Shadow(int in_w, int in_h)
 
 Shadow::~Shadow(void)
 {
-	cout << "Shadow: Stopping videoinput and then deleting it\n";
 	videoinput->StopPlaying();
 	delete videoinput;
 }
@@ -70,7 +68,7 @@ void Shadow::StartPlaying(void)
 	videoinput->StartPlaying();
 
 	playing = true;
-	cout << "Shadow: Trying to create shadow thread\n";
+	cout << "Shadow: Creating shadow thread\n";
 	thread = SDL_CreateThread(ShadowThread,
 			static_cast<void *>(this));
 	if (thread == NULL)

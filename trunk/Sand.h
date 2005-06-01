@@ -16,6 +16,7 @@ class Sand : public GameController
 	bool Draw(void);
 
   private:
+	float angle;
 };
 
 #endif

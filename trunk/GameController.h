@@ -15,19 +15,22 @@ class GameController
 	GameController(void);
 	~GameController(void);
 
-	void StartPlaying(void);
-	void StopPlaying(void);
+	virtual void StartPlaying(void);
+	virtual void StopPlaying(void);
 
-	void HandleKey(int);
-
-	bool Draw(void);
+	virtual void HandleKey(int);
 
   private:
 
   protected:
-	int InitializeVideoOut(void);
+	virtual int InitializeVideoOut(void);
 	
+	virtual bool Draw(void);
+
 	bool running;
+
+	bool showcube;
+	float angle;
 	
 	KeyInput *keyinput;
 	Shadow *shadow;

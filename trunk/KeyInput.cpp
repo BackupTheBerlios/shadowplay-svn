@@ -24,7 +24,7 @@ KeyInput::~KeyInput(void)
 void KeyInput::StartKeyInput(void)
 {
 	playing = true;
-	cout << "KeyInput: Trying to create keyinput thread\n";
+	cout << "KeyInput: Creating keyinput thread\n";
 	thread = SDL_CreateThread(KeyInputThread,
 			static_cast<void *>(this));
 	if (thread == NULL)
@@ -60,22 +60,7 @@ void KeyInput::KeyLoop(void)
 			switch (event.type)
 			{
 				case SDL_KEYDOWN:
-					switch (event.key.keysym.sym)
-					{
-						case SDLK_EQUALS:
-							gamecontroller->HandleKey(KEY_THRESH_UP);
-							break;
-						case SDLK_MINUS:
-							gamecontroller->HandleKey(KEY_THRESH_DOWN);
-							break;
-						case SDLK_i:
-							gamecontroller->HandleKey(KEY_VIDEO);
-							break;
-						case SDLK_ESCAPE:
-							cout << "KeyInput: Got a quit command\n";
-							gamecontroller->StopPlaying();
-							break;
-					}
+					gamecontroller->HandleKey(event.key.keysym.sym);
 					break;
 				case SDL_QUIT:
 					cout << "KeyInput: Got a quit command\n";

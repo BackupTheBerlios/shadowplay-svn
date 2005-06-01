@@ -6,7 +6,7 @@ using namespace std;
 
 Sand::Sand(void)
 {
-	cout << "Sand: Constructing the sand object\n";
+	angle = 0;
 }
 
 Sand::~Sand(void)
@@ -15,12 +15,12 @@ Sand::~Sand(void)
 
 bool Sand::Draw(void)
 {
-	if (displaytype == 1)
+	if (displaytype == 0)
 		for (int j=0; j < videobuffer->h; ++j)
-			memcpy(&teximage[j*tex_w+tex_w-videobuffer->w], &videobuffer->buffer[j*videobuffer->w], videobuffer->w);
+			memcpy(&teximage[j*tex_w], &videobuffer->buffer[j*videobuffer->w], videobuffer->w);
 	else
 		for (int j=0; j < shadowbuffer->h; ++j)
-			memcpy(&teximage[j*tex_w+tex_w-shadowbuffer->w], &shadowbuffer->buffer[j*shadowbuffer->w], shadowbuffer->w);
+			memcpy(&teximage[j*tex_w], &shadowbuffer->buffer[j*shadowbuffer->w], shadowbuffer->w);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, tex_w, tex_h, 0,
 			GL_LUMINANCE, GL_UNSIGNED_BYTE, teximage);
@@ -30,14 +30,14 @@ bool Sand::Draw(void)
 	glLoadIdentity();
 
 	glBegin(GL_QUADS);
-		glTexCoord2f(1, 1);
-		glVertex3f( 220.0f,  140.0f, -320.0f);
-		glTexCoord2f(0, 1);
-		glVertex3f(-320.0f,  240.0f, -320.0f);
-		glTexCoord2f(0, 0);
-		glVertex3f(-320.0f, -240.0f, -320.0f);
-		glTexCoord2f(1, 0);
-		glVertex3f( 320.0f, -240.0f, -320.0f);
+	glTexCoord2f(0, 1);
+	glVertex3f( 400.0f,  300.0f, -400.0f);
+	glTexCoord2f(1, 1);
+	glVertex3f(-400.0f,  300.0f, -400.0f);
+	glTexCoord2f(1, 0);
+	glVertex3f(-400.0f, -300.0f, -400.0f);
+	glTexCoord2f(0, 0);
+	glVertex3f( 400.0f, -300.0f, -400.0f);
 	glEnd();
 
 	SDL_GL_SwapBuffers();

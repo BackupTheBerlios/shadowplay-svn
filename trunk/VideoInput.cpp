@@ -65,7 +65,7 @@ void VideoInput::StopPlaying(void)
 void VideoInput::StartPlaying(void)
 {
 	playing = true;
-	cout << "VideoInput: Trying to create capture thread\n";
+	cout << "VideoInput: Creating capture thread\n";
 	thread = SDL_CreateThread(CaptureThread,
 			static_cast<void *>(this));
 	if (thread == NULL)

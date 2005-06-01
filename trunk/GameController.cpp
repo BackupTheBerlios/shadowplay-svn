@@ -18,13 +18,14 @@ using namespace std;
 
 GameController::GameController(void)
 {
-	cout << "GameController: Creating the Shadow object\n";
 	shadow = new Shadow(320, 240);
 
 	videobuffer = shadow->GetBuffer();
 	shadowbuffer = shadow->GetShadow();
 
 	displaytype = 1;
+	showcube = false;
+	angle = 0;
 
 	out_w = 640;
 	out_h = 480;
@@ -37,7 +38,6 @@ GameController::GameController(void)
 	cout << "GameController: Initializing SDL and openGL\n";
 	InitializeVideoOut();
 
-	cout << "GameController: Creating the KeyInput object\n";
 	keyinput = new KeyInput(this);
 }
 
@@ -73,16 +73,23 @@ void GameController::HandleKey(int key)
 {
 	switch (key)
 	{
-		case KEY_THRESH_UP:
+		case SDLK_EQUALS:
 			shadow->IncThreshold(2);
 			break;
-		case KEY_THRESH_DOWN:
+		case SDLK_MINUS:
 			shadow->IncThreshold(-2);
 			break;
-		case KEY_VIDEO:
+		case SDLK_c:
+			showcube = !showcube;
+			break;
+		case SDLK_i:
 			displaytype += 1;
 			if (displaytype > 1)
 				displaytype = 0;
+			break;
+		case SDLK_ESCAPE:
+			cout << "GameController: Got a quit command\n";
+			StopPlaying();
 			break;
 	}
 }
@@ -118,7 +125,7 @@ int GameController::InitializeVideoOut(void)
 	tex_mat = new GLdouble[16];
 	for (int i=0; i<16; ++i)
 		tex_mat[i] = 0.0;
-	tex_mat[0]  = -1.0f*tex_param_s;
+	tex_mat[0]  = tex_param_s;
 	tex_mat[5]  = tex_param_t;
 	tex_mat[10] = tex_mat[15] = 1.0;
 
@@ -167,7 +174,7 @@ int GameController::InitializeVideoOut(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	glOrtho(-320.0f, 320.0f, 240.0f, -240.0f, -340.0f, 340.0f);
+	glOrtho(-400.0f, 400.0f, 300.0f, -300.0f, -400.0f, 400.0f);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -175,42 +182,42 @@ int GameController::InitializeVideoOut(void)
 	cube_list = glGenLists(1);
 	glNewList(cube_list, GL_COMPILE_AND_EXECUTE);
 	glBegin(GL_QUADS);
-		// Front Face
-		glNormal3f(0.0f, 0.0f, 0.5f);
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);
-		// Back Face
-		glNormal3f(0.0f, 0.0f,-0.5f);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);
-		glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);
-		// Top Face
-		glNormal3f( 0.0f, 0.5f, 0.0f);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,  1.0f,  1.0f);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,  1.0f,  1.0f);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);
-		// Bottom Face
-		glNormal3f( 0.0f,-0.5f, 0.0f);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f, -1.0f, -1.0f);
-		glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);
-		// Right Face
-		glNormal3f( 0.5f, 0.0f, 0.0f);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);
-		glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);
-		// Left Face
-		glNormal3f(-0.5f, 0.0f, 0.0f);
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);
+	// Front Face
+	glNormal3f(0.0f, 0.0f, 0.5f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);
+	// Back Face
+	glNormal3f(0.0f, 0.0f,-0.5f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);
+	// Top Face
+	glNormal3f( 0.0f, 0.5f, 0.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f,  1.0f,  1.0f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f,  1.0f,  1.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);
+	// Bottom Face
+	glNormal3f( 0.0f,-0.5f, 0.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f, -1.0f, -1.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);
+	// Right Face
+	glNormal3f( 0.5f, 0.0f, 0.0f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);
+	// Left Face
+	glNormal3f(-0.5f, 0.0f, 0.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);
 	glEnd();
 	glEndList();
 
@@ -224,10 +231,10 @@ bool GameController::Draw(void)
 {
 	if (displaytype == 0)
 		for (int j=0; j < videobuffer->h; ++j)
-			memcpy(&teximage[j*tex_w+tex_w-videobuffer->w], &videobuffer->buffer[j*videobuffer->w], videobuffer->w);
+			memcpy(&teximage[j*tex_w], &videobuffer->buffer[j*videobuffer->w], videobuffer->w);
 	else
 		for (int j=0; j < shadowbuffer->h; ++j)
-			memcpy(&teximage[j*tex_w+tex_w-shadowbuffer->w], &shadowbuffer->buffer[j*shadowbuffer->w], shadowbuffer->w);
+			memcpy(&teximage[j*tex_w], &shadowbuffer->buffer[j*shadowbuffer->w], shadowbuffer->w);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, tex_w, tex_h, 0,
 			GL_LUMINANCE, GL_UNSIGNED_BYTE, teximage);
@@ -237,15 +244,25 @@ bool GameController::Draw(void)
 	glLoadIdentity();
 
 	glBegin(GL_QUADS);
-	glTexCoord2f(1, 1);
-	glVertex3f( 320.0f,  240.0f, -320.0f);
 	glTexCoord2f(0, 1);
-	glVertex3f(-320.0f,  240.0f, -320.0f);
-	glTexCoord2f(0, 0);
-	glVertex3f(-320.0f, -240.0f, -320.0f);
+	glVertex3f( 400.0f,  300.0f, -400.0f);
+	glTexCoord2f(1, 1);
+	glVertex3f(-400.0f,  300.0f, -400.0f);
 	glTexCoord2f(1, 0);
-	glVertex3f( 320.0f, -240.0f, -320.0f);
+	glVertex3f(-400.0f, -300.0f, -400.0f);
+	glTexCoord2f(0, 0);
+	glVertex3f( 400.0f, -300.0f, -400.0f);
 	glEnd();
+
+	if (showcube == true)
+	{
+		glScalef(100.0f, 100.0f, 100.0f);
+		angle += 1;
+		glRotatef(angle*1.3f, 1.0f, 0.0f, 0.0f);
+		glRotatef(angle*1.1f, 0.0f, 1.0f, 0.0f);
+		glRotatef(angle*1.2f, 0.0f, 0.0f, 1.0f);
+		glCallList(cube_list);
+	}
 
 	SDL_GL_SwapBuffers();
 
