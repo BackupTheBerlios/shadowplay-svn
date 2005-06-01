@@ -1,54 +1,21 @@
-#ifndef GAMECONTROLLER_H
-#define GAMECONTROLLER_H
+#ifndef SAND_H
+#define SAND_H
 
+#include "GameController.h"
 #include "VideoInput.h"
 #include "Shadow.h"
 #include "KeyInput.h"
 #include "GL/gl.h"
 
-class KeyInput;
-class Shadow;
-
-class GameController
+class Sand : public GameController
 {
   public:
-	GameController(void);
-	~GameController(void);
+	Sand(void);
+	~Sand(void);
 
-	void StartPlaying(void);
-	void StopPlaying(void);
-
-	void HandleKey(int);
+	bool Draw(void);
 
   private:
-	int InitializeVideoOut(void);
-	bool Draw(void);
-	
-	bool running;
-	
-	KeyInput *keyinput;
-	Shadow *shadow;
-	
-	vidbuffertype *videobuffer;
-	vidbuffertype *shadowbuffer;
-
-	int displaytype;
-
-	int out_w;
-	int out_h;
-
-	int tex_w;
-	int tex_h;
-	GLfloat tex_param_s;
-	GLfloat tex_param_t;
-	GLfloat aspect_ratio;
-	GLuint cube_list;
-	GLuint texture;
-	uint8_t *teximage;
-
-    GLdouble *tex_mat;
-
-  protected:
 };
 
 #endif

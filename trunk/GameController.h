@@ -20,9 +20,12 @@ class GameController
 
 	void HandleKey(int);
 
-  private:
-	int InitializeVideoOut(void);
 	bool Draw(void);
+
+  private:
+
+  protected:
+	int InitializeVideoOut(void);
 	
 	bool running;
 	
@@ -47,8 +50,6 @@ class GameController
 	uint8_t *teximage;
 
     GLdouble *tex_mat;
-
-  protected:
 };
 
 #endif

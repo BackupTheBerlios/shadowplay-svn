@@ -2,8 +2,11 @@ COMPILE=c++ -O1 -ggdb `sdl-config --cflags`
 
 all: main.o
 
-main.o : Shadow.o VideoInput.o GameController.o KeyInput.o main.cpp
-	$(COMPILE) `sdl-config --libs` -lGL -o shadowplay Shadow.o VideoInput.o KeyInput.o GameController.o main.cpp
+main.o : Shadow.o VideoInput.o GameController.o Sand.o KeyInput.o main.cpp
+	$(COMPILE) `sdl-config --libs` -lGL -o shadowplay Shadow.o VideoInput.o KeyInput.o GameController.o Sand.o main.cpp
+
+Sand.o : Sand.cpp Sand.h GameController.h KeyInput.o VideoInput.o
+	$(COMPILE) -I/usr/include/GL -c Sand.cpp
 
 GameController.o : GameController.cpp GameController.h KeyInput.o VideoInput.o
 	$(COMPILE) -I/usr/include/GL -c GameController.cpp
