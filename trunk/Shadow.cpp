@@ -97,7 +97,7 @@ int ShadowThread(void *s)
 
 void Shadow::MainLoop(void)
 {
-	nice(10);
+	nice(15);
 	
 	uint8_t *b = videobuffer->buffer;
 	int w = videobuffer->w;
