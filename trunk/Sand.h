@@ -6,6 +6,7 @@
 #include "Shadow.h"
 #include "KeyInput.h"
 #include "GL/gl.h"
+#include "GL/glu.h"
 
 struct sandtype
 {
@@ -32,6 +33,7 @@ class Sand : public GameController
 
 	int tick, lastTick;
 	float dt;
+	GLUquadricObj *quadratic;
 };
 
 #endif

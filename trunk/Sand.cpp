@@ -24,6 +24,10 @@ Sand::Sand(void)
 		sand[i].cg = rand()/(float)RAND_MAX;
 		sand[i].cb = rand()/(float)RAND_MAX;
 	}
+
+	quadratic = gluNewQuadric();
+	gluQuadricNormals(quadratic, GLU_SMOOTH);
+	gluQuadricTexture(quadratic, GL_TRUE);
 }
 
 Sand::~Sand(void)
@@ -58,12 +62,16 @@ bool Sand::Draw(void)
 		glTranslatef(sand[i].x, sand[i].y, 1.0f);
 
 		glColor3f(sand[i].cr, sand[i].cg, sand[i].cb);
+
+		gluDisk(quadratic,0.0f, sand[i].r, 8, 2);
+/*
 		glBegin(GL_QUADS);
 			glVertex3f(sand[i].r, sand[i].r, 0.0f);
 			glVertex3f(-sand[i].r, sand[i].r, 0.0f);
 			glVertex3f(-sand[i].r, -sand[i].r, 0.0f);
 			glVertex3f(sand[i].r, -sand[i].r, 0.0f);
 		glEnd();
+*/
 	}
 
 	glEnable(GL_TEXTURE_2D);
