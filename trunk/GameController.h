@@ -60,6 +60,11 @@ class GameController
 	uint8_t *teximage;
 
     GLdouble *tex_mat;
+
+	int frames;
+	int fpsTicks;
+	float fps;
+	bool showfps;
 };
 
 #endif

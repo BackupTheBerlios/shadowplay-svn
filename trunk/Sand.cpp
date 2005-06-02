@@ -9,17 +9,17 @@ Sand::Sand(void)
 {
 	srand(time(0));
 
-	n = 10;
+	n = 100;
 	sand = new sandtype [n];
 	for (int i = 0; i < n; i++)
 	{
-		sand[i].x = rand()/(float)RAND_MAX*RIGHT-RIGHT/2.0f;
-		sand[i].y = rand()/(float)RAND_MAX*TOP-TOP/2.0f;
-		sand[i].vx = rand()/(float)RAND_MAX;
-		sand[i].vy = rand()/(float)RAND_MAX;
+		sand[i].x =rand()/(float)RAND_MAX*(RIGHT-LEFT)-(RIGHT-LEFT)/2;
+		sand[i].y =rand()/(float)RAND_MAX*(TOP-BOTTOM)-(TOP-BOTTOM)/2;
+		sand[i].vx = rand()/(float)RAND_MAX*50.0f-25.0f;
+		sand[i].vy = rand()/(float)RAND_MAX*50.0f-25.0f;
 		sand[i].ax = 0;
 		sand[i].ay = -10;
-		sand[i].r = 10;
+		sand[i].r = 5;
 		sand[i].cr = rand()/(float)RAND_MAX;
 		sand[i].cg = rand()/(float)RAND_MAX;
 		sand[i].cb = rand()/(float)RAND_MAX;
@@ -57,21 +57,37 @@ bool Sand::Draw(void)
 		sand[i].y += sand[i].vy*dt + 0.5f*sand[i].ay*dt*dt;
 		sand[i].vx += sand[i].ax*dt;
 		sand[i].vy += sand[i].ay*dt;
+
+		if (sand[i].x > RIGHT || sand[i].x < LEFT ||
+			sand[i].y > TOP + 30 || sand[i].y < BOTTOM)
+		{
+			sand[i].x = rand()/(float)RAND_MAX*RIGHT-RIGHT/2.0f;
+			sand[i].y = TOP + 10;
+			sand[i].vx = rand()/(float)RAND_MAX*10.0f-5.0f;
+			sand[i].vy = rand()/(float)RAND_MAX*5.0f;
+			sand[i].ax = 0;
+			sand[i].ay = -10;
+			sand[i].r = 5;
+			sand[i].cr = rand()/(float)RAND_MAX;
+			sand[i].cg = rand()/(float)RAND_MAX;
+			sand[i].cb = rand()/(float)RAND_MAX;
+		}
+
 		glLoadIdentity();
 
 		glTranslatef(sand[i].x, sand[i].y, 1.0f);
 
 		glColor3f(sand[i].cr, sand[i].cg, sand[i].cb);
 
-		gluDisk(quadratic,0.0f, sand[i].r, 8, 2);
-/*
-		glBegin(GL_QUADS);
-			glVertex3f(sand[i].r, sand[i].r, 0.0f);
-			glVertex3f(-sand[i].r, sand[i].r, 0.0f);
-			glVertex3f(-sand[i].r, -sand[i].r, 0.0f);
-			glVertex3f(sand[i].r, -sand[i].r, 0.0f);
-		glEnd();
-*/
+		gluDisk(quadratic, 0.0f, sand[i].r, 8, 2);
+		/*
+		   glBegin(GL_QUADS);
+		   glVertex3f(sand[i].r, sand[i].r, 0.0f);
+		   glVertex3f(-sand[i].r, sand[i].r, 0.0f);
+		   glVertex3f(-sand[i].r, -sand[i].r, 0.0f);
+		   glVertex3f(sand[i].r, -sand[i].r, 0.0f);
+		   glEnd();
+		 */
 	}
 
 	glEnable(GL_TEXTURE_2D);

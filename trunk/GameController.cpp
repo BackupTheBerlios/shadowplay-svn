@@ -23,6 +23,10 @@ GameController::GameController(void)
 	videobuffer = shadow->GetBuffer();
 	shadowbuffer = shadow->GetShadow();
 
+	frames = 0;
+	fps = 0;
+	showfps = false;
+
 	displaytype = 1;
 	showcube = false;
 	angle = 0;
@@ -54,10 +58,22 @@ void GameController::StartPlaying(void)
 	shadow->StartPlaying();
 	keyinput->StartKeyInput();
 
+	fpsTicks = SDL_GetTicks();
+
 	cout << "GameController: Entering the event loop\n";
 	while (running)
 	{
 		Draw();
+		frames++;
+		if (frames >= 100)
+		{
+			int t = SDL_GetTicks();
+			fps = (float)frames/(float)(t-fpsTicks)*1000.0f;
+			if (showfps)
+				cout << "GameController: FPS: " << fps << endl;
+			fpsTicks = t;
+			frames = 0;
+		}
 	}
 	
 	shadow->StopPlaying();
@@ -79,10 +95,13 @@ void GameController::HandleKey(int key)
 		case SDLK_MINUS:
 			shadow->IncThreshold(-2);
 			break;
+		case SDLK_f:
+			showfps = !showfps;
+			break;
 		case SDLK_c:
 			showcube = !showcube;
 			break;
-		case SDLK_i:
+		case SDLK_v:
 			displaytype += 1;
 			if (displaytype > 1)
 				displaytype = 0;
@@ -222,7 +241,6 @@ int GameController::InitializeVideoOut(void)
 	glEnd();
 	glEndList();
 
-	//Set texture transform matrix to alter (here only to scale) texture coordinates
 	glMatrixMode(GL_TEXTURE);
 	glLoadMatrixd(tex_mat);
 	glMatrixMode(GL_MODELVIEW);
@@ -245,22 +263,22 @@ bool GameController::Draw(void)
 	glLoadIdentity();
 
 	glBegin(GL_QUADS);
-	glTexCoord2f(0, 0);
-	glVertex3f(RIGHT, TOP, BACK);
-	glTexCoord2f(1, 0);
-	glVertex3f(LEFT, TOP, BACK);
-	glTexCoord2f(1, 1);
-	glVertex3f(LEFT, BOTTOM, BACK);
-	glTexCoord2f(0, 1);
-	glVertex3f(RIGHT, BOTTOM, BACK);
+		glTexCoord2f(0, 0);
+		glVertex3f(RIGHT, TOP, BACK);
+		glTexCoord2f(1, 0);
+		glVertex3f(LEFT, TOP, BACK);
+		glTexCoord2f(1, 1);
+		glVertex3f(LEFT, BOTTOM, BACK);
+		glTexCoord2f(0, 1);
+		glVertex3f(RIGHT, BOTTOM, BACK);
 	glEnd();
 
 	if (showcube == true)
 	{
 		glScalef(.25*RIGHT, .25*RIGHT, .25*RIGHT);
 		angle += 1;
-		glRotatef(angle*1.3f, 1.0f, 0.0f, 0.0f);
-		glRotatef(angle*1.1f, 0.0f, 1.0f, 0.0f);
+		glRotatef(angle*1.4f, 1.0f, 0.0f, 0.0f);
+		glRotatef(angle*1.0f, 0.0f, 1.0f, 0.0f);
 		glRotatef(angle*1.2f, 0.0f, 0.0f, 1.0f);
 		glCallList(cube_list);
 	}
