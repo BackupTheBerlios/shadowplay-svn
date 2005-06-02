@@ -6,6 +6,13 @@
 #include "KeyInput.h"
 #include "GL/gl.h"
 
+#define LEFT   -400.0f
+#define RIGHT   400.0f
+#define TOP     300.0f
+#define BOTTOM -300.0f
+#define BACK   -400.0f
+#define FRONT   400.0f
+
 class KeyInput;
 class Shadow;
 

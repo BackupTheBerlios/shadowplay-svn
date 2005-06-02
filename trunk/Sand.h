@@ -7,6 +7,16 @@
 #include "KeyInput.h"
 #include "GL/gl.h"
 
+struct sandtype
+{
+	float x, y;
+	float vx, vy;
+	float ax, ay;
+
+	float r;
+	float cr, cg, cb ;
+};
+
 class Sand : public GameController
 {
   public:
@@ -16,7 +26,12 @@ class Sand : public GameController
 	bool Draw(void);
 
   private:
-	float angle;
+	sandtype *sand;
+
+	int n;
+
+	int tick, lastTick;
+	float dt;
 };
 
 #endif

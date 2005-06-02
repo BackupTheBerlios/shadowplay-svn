@@ -154,6 +154,7 @@ int GameController::InitializeVideoOut(void)
 		cout << "GameController: Couldn't create a surface: " << SDL_GetError() << endl;
 		return -1;
 	}	
+	SDL_WM_SetCaption("Shadowplay v2 - Electric Boogaloo", "Shadowplay");
 
 	glClearColor(1.0f,1.0f,1.0f,1.0f);
 	glClearDepth(1.0f);
@@ -174,7 +175,7 @@ int GameController::InitializeVideoOut(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	glOrtho(-400.0f, 400.0f, 300.0f, -300.0f, -400.0f, 400.0f);
+	glOrtho(LEFT, RIGHT, BOTTOM, TOP, BACK, FRONT);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -244,19 +245,19 @@ bool GameController::Draw(void)
 	glLoadIdentity();
 
 	glBegin(GL_QUADS);
-	glTexCoord2f(0, 1);
-	glVertex3f( 400.0f,  300.0f, -400.0f);
-	glTexCoord2f(1, 1);
-	glVertex3f(-400.0f,  300.0f, -400.0f);
-	glTexCoord2f(1, 0);
-	glVertex3f(-400.0f, -300.0f, -400.0f);
 	glTexCoord2f(0, 0);
-	glVertex3f( 400.0f, -300.0f, -400.0f);
+	glVertex3f(RIGHT, TOP, BACK);
+	glTexCoord2f(1, 0);
+	glVertex3f(LEFT, TOP, BACK);
+	glTexCoord2f(1, 1);
+	glVertex3f(LEFT, BOTTOM, BACK);
+	glTexCoord2f(0, 1);
+	glVertex3f(RIGHT, BOTTOM, BACK);
 	glEnd();
 
 	if (showcube == true)
 	{
-		glScalef(100.0f, 100.0f, 100.0f);
+		glScalef(.25*RIGHT, .25*RIGHT, .25*RIGHT);
 		angle += 1;
 		glRotatef(angle*1.3f, 1.0f, 0.0f, 0.0f);
 		glRotatef(angle*1.1f, 0.0f, 1.0f, 0.0f);

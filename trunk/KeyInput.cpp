@@ -54,7 +54,7 @@ void KeyInput::KeyLoop(void)
 
 	while (playing)
 	{
-		usleep(50);
+		SDL_Delay(5);
 		while (SDL_PollEvent(&event))
 		{
 			switch (event.type)
