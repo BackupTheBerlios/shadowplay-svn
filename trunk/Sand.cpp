@@ -58,15 +58,39 @@ inline bool Sand::Draw(void)
 
 	glDisable(GL_TEXTURE_2D);
 
-	int j;
+	int j, posx, posy;
 	float dx, dy, len, ux, uy;
 	for (int i = 0; i < N; i++)
 	{
 		sandtype &s = sand[i];
-		s.x += s.vx*dt + 0.5f*s.ax*dt*dt;
-		s.y += s.vy*dt + 0.5f*s.ay*dt*dt;
-		s.vx += s.ax*dt;
-		s.vy += s.ay*dt;
+	
+		posx = shadowbuffer->w - (int)((s.x-LEFT)/(RIGHT-LEFT)*shadowbuffer->w) - 1;
+		posy = shadowbuffer->h - (int)((s.y-BOTTOM)/(TOP-BOTTOM)*shadowbuffer->h) - 1;
+
+		if (posx < shadowbuffer->w && posy < shadowbuffer->h &&
+				posx >= 0 && posy >= 0)
+		{
+			if (shadowbuffer->buffer[posx+posy*shadowbuffer->w] > 0)
+			{
+				s.x += s.vx*dt + 0.5f*s.ax*dt*dt;
+				s.y += s.vy*dt + 0.5f*s.ay*dt*dt;
+				s.vx += s.ax*dt;
+				s.vy += s.ay*dt;
+			}
+			else
+			{
+				s.vx = 0;
+				s.vy = 0;
+			}
+		}
+		else
+		{
+			s.x += s.vx*dt + 0.5f*s.ax*dt*dt;
+			s.y += s.vy*dt + 0.5f*s.ay*dt*dt;
+			s.vx += s.ax*dt;
+			s.vy += s.ay*dt;
+		}
+			
 
 		if (s.x >= RIGHT - s.r ||
 				s.x <= LEFT + s.r)

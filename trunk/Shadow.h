@@ -23,6 +23,7 @@ class Shadow
 	void MainLoop(void);
 
 	int IncThreshold(int);
+	void Invert(void);
 
   private:
 	VideoInput *videoinput;
@@ -34,6 +35,8 @@ class Shadow
 	
 	bool playing;
 	int threshold;
+
+	uint8_t one, two;
 };
 
 #endif

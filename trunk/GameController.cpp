@@ -95,6 +95,9 @@ void GameController::HandleKey(int key)
 		case SDLK_MINUS:
 			shadow->IncThreshold(-2);
 			break;
+		case SDLK_i:
+			shadow->Invert();
+			break;
 		case SDLK_f:
 			showfps = !showfps;
 			break;

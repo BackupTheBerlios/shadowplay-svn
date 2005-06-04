@@ -33,6 +33,9 @@ Shadow::Shadow(int in_w, int in_h)
 	shadowbuffer->w = videobuffer->w;
 	shadowbuffer->h = videobuffer->h;
 	shadowbuffer->bufferlen = videobuffer->w*videobuffer->h;
+
+	one = 0;
+	two = 255;
 }
 
 Shadow::~Shadow(void)
@@ -51,6 +54,20 @@ int Shadow::IncThreshold(int inc)
 		threshold = 255-1;
 
 	return threshold;
+}
+
+void Shadow::Invert(void)
+{
+	if (one == 0)
+	{
+		one = 255;
+		two = 0;
+	}
+	else
+	{
+		one = 0;
+		two = 255;
+	}
 }
 
 vidbuffertype *Shadow::GetBuffer(void)
@@ -136,16 +153,16 @@ void Shadow::MainLoop(void)
 				if (bt[l] && bt[l+1] + bt[l-1] +
 						bt[l-w] + bt[l-w-1] + bt[l-w+1] +
 						bt[l+w] + bt[l+w-1] + bt[l+w+1] > 4)
-					s[l] = 0;
+					s[l] = one;
 				else
-					s[l] = 255;
+					s[l] = two;
 				if (!bt[l] && bt[l+1] + bt[l-1] +
 						bt[l-w] + bt[l-w-1] + bt[l-w+1] +
 						bt[l+w] + bt[l+w-1] + bt[l+w+1] < 4)
 
-					s[l] = 255;
+					s[l] = two;
 				else
-					s[l] = 0;
+					s[l] = one;
 			}
 		}
 		SDL_Delay(25);
