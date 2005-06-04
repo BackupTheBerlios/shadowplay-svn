@@ -1,4 +1,4 @@
-COMPILE=c++ -O3 -ggdb `sdl-config --cflags`
+COMPILE=c++ -O3 -ggdb -mmmx -msse -march=athlon-xp `sdl-config --cflags`
 
 all: main.o
 

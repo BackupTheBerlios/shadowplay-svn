@@ -48,13 +48,11 @@ int KeyInputThread(void *ki)
 
 void KeyInput::KeyLoop(void)
 {
-	nice(10);
-
 	SDL_Event event;
 
 	while (playing)
 	{
-		SDL_Delay(50);
+		SDL_Delay(100);
 		while (SDL_PollEvent(&event))
 		{
 			switch (event.type)

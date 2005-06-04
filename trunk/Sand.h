@@ -16,6 +16,9 @@ struct sandtype
 
 	float r;
 	float cr, cg, cb ;
+
+	float m;
+	float d;
 };
 
 class Sand : public GameController
@@ -28,8 +31,6 @@ class Sand : public GameController
 
   private:
 	sandtype *sand;
-
-	int n;
 
 	int tick, lastTick;
 	float dt;

@@ -48,7 +48,7 @@ int Shadow::IncThreshold(int inc)
 	if (threshold <= 0)
 		threshold = 1;
 	if (threshold >= 255)
-		threshold = 254;
+		threshold = 255-1;
 
 	return threshold;
 }
@@ -95,28 +95,59 @@ int ShadowThread(void *s)
 
 void Shadow::MainLoop(void)
 {
-	nice(15);
-	
-	uint8_t *b = videobuffer->buffer;
-	int w = videobuffer->w;
-	int h = videobuffer->h;
+	const uint8_t *b = videobuffer->buffer;
+	uint8_t *s = shadowbuffer->buffer;
+
+	const int w = videobuffer->w;
+	const int h = videobuffer->h;
+
+	bool *bt = new bool [w*h];
 
 	for (int i=0; i < w*h; i++)
-		shadowbuffer->buffer[i] = 255;
+		s[i] = 255;
+
+	int i, j, l;
 
 	while (playing)
 	{
-		for (int i=7; i < w - 7; i++)
+		for (i = 7; i < w - 7; i++)
 		{
-			for (int j=5; j < h - 5; j++)
+			for (j = 5; j < h - 5; j++)
 			{
-				if (b[i+j*w] + b[i+j*w+1] + b[i+j*w-1] +
-						b[i+(j-1)*w] + b[i+(j+1)*w] 
-						> threshold * 5.0f)
-					shadowbuffer->buffer[i+j*w] = 255;
+				l = i+j*w;				
+				if (b[l] + b[l+1] + b[l-1] +
+						b[l-w] + b[l-w-1] + b[l-w+1] +
+						b[l+w] + b[l+w-1] + b[l+w+1] >
+						threshold * 8)
+				{
+					bt[l] = false;
+				}
 				else
-					shadowbuffer->buffer[i+j*w] = 0;
+				{
+					bt[l] = true;
+				}
 			}
 		}
+		for (i = 7; i < w - 7; i++)
+		{
+			for (j = 5; j < h - 5; j++)
+			{
+				l = i+j*w;				
+				if (bt[l] && bt[l+1] + bt[l-1] +
+						bt[l-w] + bt[l-w-1] + bt[l-w+1] +
+						bt[l+w] + bt[l+w-1] + bt[l+w+1] > 4)
+					s[l] = 0;
+				else
+					s[l] = 255;
+				if (!bt[l] && bt[l+1] + bt[l-1] +
+						bt[l-w] + bt[l-w-1] + bt[l-w+1] +
+						bt[l+w] + bt[l+w-1] + bt[l+w+1] < 4)
+
+					s[l] = 255;
+				else
+					s[l] = 0;
+			}
+		}
+		SDL_Delay(25);
 	}
 }

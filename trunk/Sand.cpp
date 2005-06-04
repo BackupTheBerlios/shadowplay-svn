@@ -3,15 +3,17 @@
 
 #include "Sand.h"
 
+#define N 10
+#define R 20
+
 using namespace std;
 
 Sand::Sand(void)
 {
 	srand(time(0));
 
-	n = 100;
-	sand = new sandtype [n];
-	for (int i = 0; i < n; i++)
+	sand = new sandtype [N];
+	for (int i = 0; i < N; i++)
 	{
 		sand[i].x =rand()/(float)RAND_MAX*(RIGHT-LEFT)-(RIGHT-LEFT)/2;
 		sand[i].y =rand()/(float)RAND_MAX*(TOP-BOTTOM)-(TOP-BOTTOM)/2;
@@ -19,7 +21,11 @@ Sand::Sand(void)
 		sand[i].vy = rand()/(float)RAND_MAX*50.0f-25.0f;
 		sand[i].ax = 0;
 		sand[i].ay = -10;
-		sand[i].r = 5;
+
+		sand[i].r = R;
+		sand[i].m = 10;
+		sand[i].d = 0.95f;
+
 		sand[i].cr = rand()/(float)RAND_MAX;
 		sand[i].cg = rand()/(float)RAND_MAX;
 		sand[i].cb = rand()/(float)RAND_MAX;
@@ -34,7 +40,7 @@ Sand::~Sand(void)
 {
 }
 
-bool Sand::Draw(void)
+inline bool Sand::Draw(void)
 {
 	tick = SDL_GetTicks();
 	dt = (float)(tick-lastTick)/100;
@@ -51,41 +57,59 @@ bool Sand::Draw(void)
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 	glDisable(GL_TEXTURE_2D);
-	for (int i = 0; i < n; i++)
-	{
-		sand[i].x += sand[i].vx*dt + 0.5f*sand[i].ax*dt*dt;
-		sand[i].y += sand[i].vy*dt + 0.5f*sand[i].ay*dt*dt;
-		sand[i].vx += sand[i].ax*dt;
-		sand[i].vy += sand[i].ay*dt;
 
-		if (sand[i].x > RIGHT || sand[i].x < LEFT ||
-			sand[i].y > TOP + 30 || sand[i].y < BOTTOM)
+	int j;
+	float dx, dy, len, ux, uy;
+	for (int i = 0; i < N; i++)
+	{
+		sandtype &s = sand[i];
+		s.x += s.vx*dt + 0.5f*s.ax*dt*dt;
+		s.y += s.vy*dt + 0.5f*s.ay*dt*dt;
+		s.vx += s.ax*dt;
+		s.vy += s.ay*dt;
+
+		if (s.x >= RIGHT - s.r ||
+				s.x <= LEFT + s.r)
+			s.vx = -1.0f*s.vx*s.d;
+
+		if (s.y < BOTTOM - s.r ||
+				s.y > TOP + 4*s.r)
 		{
-			sand[i].x = rand()/(float)RAND_MAX*RIGHT-RIGHT/2.0f;
-			sand[i].y = TOP + 10;
-			sand[i].vx = rand()/(float)RAND_MAX*10.0f-5.0f;
-			sand[i].vy = rand()/(float)RAND_MAX*5.0f;
-			sand[i].ax = 0;
-			sand[i].ay = -10;
-			sand[i].r = 5;
-			sand[i].cr = rand()/(float)RAND_MAX;
-			sand[i].cg = rand()/(float)RAND_MAX;
-			sand[i].cb = rand()/(float)RAND_MAX;
+			s.x = rand()/(float)RAND_MAX*RIGHT-RIGHT/2.0f;
+			s.y = TOP + R;
+			s.vx = rand()/(float)RAND_MAX*80.0f-40.0f;
+			s.vy = rand()/(float)RAND_MAX*-20.0f;
+		}
+
+		for (j = 0; j < N; j++)
+		{
+			if (powf(s.x-sand[j].x, 2) + powf(s.y-sand[j].y, 2) <= 
+					powf(s.r + sand[j].r, 2))
+			{
+				dx = s.x - sand[j].x;
+				dy = s.y - sand[j].y;
+				if (s.vx*dx+s.vy*dy - sand[j].vx*dx+sand[j].vy*dy > 0)
+				{
+					len = sqrt(pow(dx,2)+pow(dy,2));
+					ux = dx/len;
+					uy = dy/len;
+				}
+			}
 		}
 
 		glLoadIdentity();
 
-		glTranslatef(sand[i].x, sand[i].y, 1.0f);
+		glTranslatef(s.x, s.y, 1.0f);
 
-		glColor3f(sand[i].cr, sand[i].cg, sand[i].cb);
+		glColor3f(s.cr, s.cg, s.cb);
 
-		gluDisk(quadratic, 0.0f, sand[i].r, 8, 2);
+		gluDisk(quadratic, 0.0f, s.r, 10, 1);
 		/*
 		   glBegin(GL_QUADS);
-		   glVertex3f(sand[i].r, sand[i].r, 0.0f);
-		   glVertex3f(-sand[i].r, sand[i].r, 0.0f);
-		   glVertex3f(-sand[i].r, -sand[i].r, 0.0f);
-		   glVertex3f(sand[i].r, -sand[i].r, 0.0f);
+		   glVertex3f(s.r, s.r, 0.0f);
+		   glVertex3f(-s.r, s.r, 0.0f);
+		   glVertex3f(-s.r, -s.r, 0.0f);
+		   glVertex3f(s.r, -s.r, 0.0f);
 		   glEnd();
 		 */
 	}
@@ -99,14 +123,14 @@ bool Sand::Draw(void)
 	glLoadIdentity();
 
 	glBegin(GL_QUADS);
-		glTexCoord2f(0, 0);
-		glVertex3f(RIGHT, TOP, BACK);
-		glTexCoord2f(1, 0);
-		glVertex3f(LEFT, TOP, BACK);
-		glTexCoord2f(1, 1);
-		glVertex3f(LEFT, BOTTOM, BACK);
-		glTexCoord2f(0, 1);
-		glVertex3f(RIGHT, BOTTOM, BACK);
+	glTexCoord2f(0, 0);
+	glVertex3f(RIGHT, TOP, BACK);
+	glTexCoord2f(1, 0);
+	glVertex3f(LEFT, TOP, BACK);
+	glTexCoord2f(1, 1);
+	glVertex3f(LEFT, BOTTOM, BACK);
+	glTexCoord2f(0, 1);
+	glVertex3f(RIGHT, BOTTOM, BACK);
 	glEnd();
 
 	SDL_GL_SwapBuffers();
