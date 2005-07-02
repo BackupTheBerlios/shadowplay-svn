@@ -3,8 +3,8 @@
 
 #include "Sand.h"
 
-#define N 10
-#define R 20
+#define N 300
+#define R 3
 
 using namespace std;
 
@@ -64,12 +64,16 @@ inline bool Sand::Draw(void)
 	{
 		sandtype &s = sand[i];
 	
-		posx = shadowbuffer->w - (int)((s.x-LEFT)/(RIGHT-LEFT)*shadowbuffer->w) - 1;
-		posy = shadowbuffer->h - (int)((s.y-BOTTOM)/(TOP-BOTTOM)*shadowbuffer->h) - 1;
+		posx = shadowbuffer->w -
+			(int)((s.x-LEFT)/(RIGHT-LEFT)*shadowbuffer->w) - 1;
+		posy = shadowbuffer->h -
+			(int)((s.y-BOTTOM)/(TOP-BOTTOM)*shadowbuffer->h) - 1;
 
+		// Check if it's on the screen
 		if (posx < shadowbuffer->w && posy < shadowbuffer->h &&
 				posx >= 0 && posy >= 0)
 		{
+			// Check if it's in a shadow
 			if (shadowbuffer->buffer[posx+posy*shadowbuffer->w] > 0)
 			{
 				s.x += s.vx*dt + 0.5f*s.ax*dt*dt;
@@ -105,6 +109,7 @@ inline bool Sand::Draw(void)
 			s.vy = rand()/(float)RAND_MAX*-20.0f;
 		}
 
+		// Loop through for collision between sand
 		for (j = 0; j < N; j++)
 		{
 			if (powf(s.x-sand[j].x, 2) + powf(s.y-sand[j].y, 2) <= 
