@@ -12,3 +12,7 @@ The keyboard can have some control over the input and output.
 'c': For the default run mode this will display a spinning cube with the video displayed on all the faces.
 
 To create a new toy just make a new subclass of GameController and overwrite the Draw method. Then just modify main.cpp and Makefile to compile the new class in and allow you to select it from the commandline.
+
+Known problems:
+- The first time I start the program up after a reboot the video is messed up. To work around this run a different TV program like tvtime.
+- I've only ever run this on my machine which is a Athlon XP 1700+ running LFS with an AverMedia AverTV Studio tuner card (with a really old camera plugged into it for input). You might have to play around with compile options. The video input is basically a butchered version of the capture.c demonstration code for V4L.
