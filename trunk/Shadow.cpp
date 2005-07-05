@@ -34,6 +34,12 @@ Shadow::Shadow(int in_w, int in_h)
 	shadowbuffer->h = videobuffer->h;
 	shadowbuffer->bufferlen = videobuffer->w*videobuffer->h;
 
+	normalbuffer = new vidbuffertype;
+	normalbuffer->buffer = new uint8_t [videobuffer->bufferlen];
+	normalbuffer->w = videobuffer->w;
+	normalbuffer->h = videobuffer->h;
+	normalbuffer->bufferlen = videobuffer->bufferlen;
+
 	one = 0;
 	two = 255;
 }
@@ -110,10 +116,18 @@ int ShadowThread(void *s)
 }
 
 
+void Shadow::SetNormal(void)
+{
+	for (int i = 0; i < videobuffer->bufferlen; i++)
+		normalbuffer->buffer[i] = videobuffer->buffer[i];
+}
+
+
 void Shadow::MainLoop(void)
 {
 	const uint8_t *b = videobuffer->buffer;
 	uint8_t *s = shadowbuffer->buffer;
+	uint8_t *n = normalbuffer->buffer;
 
 	const int w = videobuffer->w;
 	const int h = videobuffer->h;
@@ -134,7 +148,10 @@ void Shadow::MainLoop(void)
 				l = i+j*w;				
 				if (b[l] + b[l+1] + b[l-1] +
 						b[l-w] + b[l-w-1] + b[l-w+1] +
-						b[l+w] + b[l+w-1] + b[l+w+1] >
+						b[l+w] + b[l+w-1] + b[l+w+1] -
+						(n[l] + n[l+1] + n[l-1] +
+						n[l-w] + n[l-w-1] + n[l-w+1] +
+						n[l+w] + n[l+w-1] + n[l+w+1]) >
 						threshold * 8)
 				{
 					bt[l] = false;

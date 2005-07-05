@@ -24,12 +24,14 @@ class Shadow
 
 	int IncThreshold(int);
 	void Invert(void);
+	void SetNormal(void);
 
   private:
 	VideoInput *videoinput;
 
 	vidbuffertype *videobuffer;
 	vidbuffertype *shadowbuffer;
+	vidbuffertype *normalbuffer;
 
 	SDL_Thread *thread;
 	

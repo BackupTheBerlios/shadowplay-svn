@@ -98,6 +98,9 @@ void GameController::HandleKey(int key)
 		case SDLK_i:
 			shadow->Invert();
 			break;
+		case SDLK_n:
+			shadow->SetNormal();
+			break;
 		case SDLK_f:
 			showfps = !showfps;
 			break;

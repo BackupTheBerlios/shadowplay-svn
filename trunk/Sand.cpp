@@ -3,20 +3,20 @@
 
 #include "Sand.h"
 
-#define N 300
-#define R 3
+#define N 50
+#define R 20
 
 using namespace std;
 
-Sand::Sand(void)
+Sand::Sand()
 {
 	srand(time(0));
 
 	sand = new sandtype [N];
 	for (int i = 0; i < N; i++)
 	{
-		sand[i].x =rand()/(float)RAND_MAX*(RIGHT-LEFT)-(RIGHT-LEFT)/2;
-		sand[i].y =rand()/(float)RAND_MAX*(TOP-BOTTOM)-(TOP-BOTTOM)/2;
+		sand[i].x = rand()/(float)RAND_MAX*(RIGHT-LEFT)-(RIGHT-LEFT)/2;
+		sand[i].y = rand()/(float)RAND_MAX*(TOP-BOTTOM)-(TOP-BOTTOM)/2;
 		sand[i].vx = rand()/(float)RAND_MAX*50.0f-25.0f;
 		sand[i].vy = rand()/(float)RAND_MAX*50.0f-25.0f;
 		sand[i].ax = 0;
@@ -24,6 +24,7 @@ Sand::Sand(void)
 
 		sand[i].r = R;
 		sand[i].m = 10;
+		sand[i].mi = 1.0f/sand[i].m;
 		sand[i].d = 0.95f;
 
 		sand[i].cr = rand()/(float)RAND_MAX;
@@ -58,23 +59,32 @@ inline bool Sand::Draw(void)
 
 	glDisable(GL_TEXTURE_2D);
 
-	int j, posx, posy;
-	float dx, dy, len, ux, uy;
-	for (int i = 0; i < N; i++)
+	int j, x, y, posxl, posxr, posyl, posyr, check;
+	float dx, dy, distance, ax, ay, l2, va1, vb1, va2, vb2, vaP1, vaP2;
+
+	int i = 0;
+	do
 	{
 		sandtype &s = sand[i];
 	
-		posx = shadowbuffer->w -
-			(int)((s.x-LEFT)/(RIGHT-LEFT)*shadowbuffer->w) - 1;
-		posy = shadowbuffer->h -
-			(int)((s.y-BOTTOM)/(TOP-BOTTOM)*shadowbuffer->h) - 1;
+		posxl = shadowbuffer->w - (int)((s.x+s.r-LEFT)/(RIGHT-LEFT)*shadowbuffer->w) - 1;
+		posxr = shadowbuffer->w - (int)((s.x-s.r-LEFT)/(RIGHT-LEFT)*shadowbuffer->w) - 1;
+		posyl = shadowbuffer->h - (int)((s.y+s.r-BOTTOM)/(TOP-BOTTOM)*shadowbuffer->h) - 1;
+		posyr = shadowbuffer->h - (int)((s.y-s.r-BOTTOM)/(TOP-BOTTOM)*shadowbuffer->h) - 1;
 
 		// Check if it's on the screen
-		if (posx < shadowbuffer->w && posy < shadowbuffer->h &&
-				posx >= 0 && posy >= 0)
+		if (posxr < shadowbuffer->w && posyr < shadowbuffer->h && posxl >= 0 && posyl >= 0)
 		{
 			// Check if it's in a shadow
-			if (shadowbuffer->buffer[posx+posy*shadowbuffer->w] > 0)
+			check = 0;
+			for (x = posxl; x <= posxr; x++)
+				for (y = posyl; y <= posyr; y++)
+				{
+					if (shadowbuffer->buffer[x+y*shadowbuffer->w] < 100)
+						check++;
+				}
+
+			if (check < 4)
 			{
 				s.x += s.vx*dt + 0.5f*s.ax*dt*dt;
 				s.y += s.vy*dt + 0.5f*s.ay*dt*dt;
@@ -96,12 +106,10 @@ inline bool Sand::Draw(void)
 		}
 			
 
-		if (s.x >= RIGHT - s.r ||
-				s.x <= LEFT + s.r)
+		if (s.x >= RIGHT - s.r || s.x <= LEFT + s.r)
 			s.vx = -1.0f*s.vx*s.d;
 
-		if (s.y < BOTTOM - s.r ||
-				s.y > TOP + 4*s.r)
+		if (s.y < BOTTOM - s.r || s.y > TOP + 4*s.r)
 		{
 			s.x = rand()/(float)RAND_MAX*RIGHT-RIGHT/2.0f;
 			s.y = TOP + R;
@@ -110,21 +118,49 @@ inline bool Sand::Draw(void)
 		}
 
 		// Loop through for collision between sand
-		for (j = 0; j < N; j++)
+		j = 0;
+		do
 		{
-			if (powf(s.x-sand[j].x, 2) + powf(s.y-sand[j].y, 2) <= 
-					powf(s.r + sand[j].r, 2))
-			{
-				dx = s.x - sand[j].x;
-				dy = s.y - sand[j].y;
-				if (s.vx*dx+s.vy*dy - sand[j].vx*dx+sand[j].vy*dy > 0)
-				{
-					len = sqrt(pow(dx,2)+pow(dy,2));
-					ux = dx/len;
-					uy = dy/len;
-				}
-			}
-		}
+			sandtype &s2 = sand[j];
+
+			dx = s2.x-s.x;
+			dy = s2.y-s.y;
+
+			l2 = dx*dx + dy*dy;
+			if (l2 > powf(s.r + s2.r, 2) || l2 <= 0)
+				goto Next;
+
+			distance = sqrt(l2);
+
+			ax = dx/distance;
+			ay = dy/distance;
+
+			// Projection of the velocities in these axes
+			va1 = s.vx*ax + s.vy*ay;
+			va2 = s2.vx*ax + s2.vy*ay;
+
+			if (va2 - va1 >= 0)
+				goto Next;
+
+			vb1 = s.vy*ax - s.vx*ay;
+			vb2 = s2.vy*ax - s2.vx*ay;
+
+			// New velocities in these axes (after collision)
+			vaP1 = va1 + (1+s.d)*(va2-va1)/(1+s.m*s2.mi);
+			vaP2 = va2 + (1+s.d)*(va1-va2)/(1+s2.m*s.mi);
+
+			// Undo the projections
+			s.vx = vaP1*ax - vb1*ay;
+			s.vy = vaP1*ay + vb1*ax;
+			s2.vx = vaP2*ax - vb2*ay;
+			s2.vy = vaP2*ay + vb2*ax;
+
+			s2.x = s.x + (s.r+s2.r)*ax;
+			s2.y = s.y + (s.r+s2.r)*ay;
+
+Next:
+			j++;
+		} while (j < N);
 
 		glLoadIdentity();
 
@@ -141,7 +177,10 @@ inline bool Sand::Draw(void)
 		   glVertex3f(s.r, -s.r, 0.0f);
 		   glEnd();
 		 */
-	}
+
+		i++;
+	} while (i < N);
+
 
 	glEnable(GL_TEXTURE_2D);
 	glColor3f(1.0f, 1.0f, 1.0f);

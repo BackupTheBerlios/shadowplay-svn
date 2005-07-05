@@ -17,7 +17,7 @@ struct sandtype
 	float r;
 	float cr, cg, cb ;
 
-	float m;
+	float m, mi;
 	float d;
 };
 
