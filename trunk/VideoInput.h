@@ -17,7 +17,6 @@
 #include <sys/ioctl.h>
 
 #include <vector>
-
 #include <asm/types.h>
 #include <linux/videodev2.h>
 

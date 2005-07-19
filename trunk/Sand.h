@@ -1,6 +1,8 @@
 #ifndef SAND_H
 #define SAND_H
 
+#include <vector>
+
 #include "GameController.h"
 #include "VideoInput.h"
 #include "Shadow.h"
@@ -31,10 +33,13 @@ class Sand : public GameController
 
   private:
 	sandtype *sand;
+	vector<int> *location; // Subdivides the screen for faster collisions
+	int locw, loch;
 
 	int tick, lastTick;
 	float dt;
 	GLUquadricObj *quadratic;
+
 };
 
 #endif

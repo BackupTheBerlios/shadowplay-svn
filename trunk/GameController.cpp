@@ -18,7 +18,14 @@ using namespace std;
 
 GameController::GameController(void)
 {
-	shadow = new Shadow(320, 240);
+	window.left = 0;
+	window.right = 320;
+	window.top = 240;
+	window.bottom = 0;
+	window.front = -320;
+	window.back = 320;
+
+	shadow = new Shadow((int)(window.right-window.left), (int)(window.top-window.bottom));
 
 	videobuffer = shadow->GetBuffer();
 	shadowbuffer = shadow->GetShadow();
@@ -90,10 +97,10 @@ void GameController::HandleKey(int key)
 	switch (key)
 	{
 		case SDLK_EQUALS:
-			shadow->IncThreshold(2);
+			shadow->IncThreshold(3);
 			break;
 		case SDLK_MINUS:
-			shadow->IncThreshold(-2);
+			shadow->IncThreshold(-3);
 			break;
 		case SDLK_i:
 			shadow->Invert();
@@ -200,7 +207,7 @@ int GameController::InitializeVideoOut(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	glOrtho(LEFT, RIGHT, BOTTOM, TOP, BACK, FRONT);
+	glOrtho(window.left, window.right, window.bottom, window.top, window.back, window.front);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -270,18 +277,18 @@ bool GameController::Draw(void)
 
 	glBegin(GL_QUADS);
 		glTexCoord2f(0, 0);
-		glVertex3f(RIGHT, TOP, BACK);
+		glVertex3f(window.right, window.top, window.back);
 		glTexCoord2f(1, 0);
-		glVertex3f(LEFT, TOP, BACK);
+		glVertex3f(window.left, window.top, window.back);
 		glTexCoord2f(1, 1);
-		glVertex3f(LEFT, BOTTOM, BACK);
+		glVertex3f(window.left, window.bottom, window.back);
 		glTexCoord2f(0, 1);
-		glVertex3f(RIGHT, BOTTOM, BACK);
+		glVertex3f(window.right, window.bottom, window.back);
 	glEnd();
 
 	if (showcube == true)
 	{
-		glScalef(.25*RIGHT, .25*RIGHT, .25*RIGHT);
+		glScalef(.25*window.right, .25*window.right, .25*window.right);
 		angle += 1;
 		glRotatef(angle*1.4f, 1.0f, 0.0f, 0.0f);
 		glRotatef(angle*1.0f, 0.0f, 1.0f, 0.0f);
