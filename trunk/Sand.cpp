@@ -1,11 +1,10 @@
 #include <iostream>
-#include <vector>
 #include <math.h>
 
 #include "Sand.h"
 
-#define N 100
-#define R 2
+#define N 1500
+#define R .75
 
 using namespace std;
 
@@ -26,7 +25,7 @@ Sand::Sand()
 		sand[i].r = R+.5f;
 		sand[i].m = 10;
 		sand[i].mi = 1.0f/sand[i].m;
-		sand[i].d = 0.75f;
+		sand[i].d = 0.5f;
 
 		sand[i].cr = rand()/(float)RAND_MAX;
 		sand[i].cg = rand()/(float)RAND_MAX;
@@ -161,7 +160,7 @@ inline bool Sand::Draw(void)
 				}
 			}
 
-			if (j > R && check < R)
+			if (j > R+1 && check < R)
 			{
 				s.x += s.vx*dt + 0.5f*s.ax*dt*dt;
 				s.y += s.vy*dt + 0.5f*s.ay*dt*dt;
@@ -172,37 +171,30 @@ inline bool Sand::Draw(void)
 			}
 
 			j++;
-		} while (count < R && j <= R*2);
-
+		} while (count < R && j <= R*4);
 		
 		// Bounce the thing off the shadow
 		if (count >= R)
 		{
 			distance = hypotf(ax, ay);
-			if (distance > 0.0001)
+			if (distance > 0.000001)
 			{
 				ax /= distance;
 				ay /= distance;
 
 				// Projection of the velocity in these axes
-				va1 = s.vx*ax + s.vy*ay;
+				//va1 = s.d*(s.vx*ax + s.vy*ay);
+				va1 = -1.0f*j;
+				vb1 = s.vy*ax - s.vx*ay;
 
-				if (va1 > 0)
-				{
-					vb1 = s.vy*ax - s.vx*ay;
-
-					// New velocity in these axes (after collision)
-					vaP1 = s.d*va1*.2;
-
-					// Undo the projections
-					s.vx = vaP1*ax - vb1*ay;
-					s.vy = vaP1*ay + vb1*ax;
-				}
+				// Undo the projections
+				s.vx = va1*ax - vb1*ay;
+				s.vy = va1*ay + vb1*ax;
 			}
 			else
 			{
 				s.vx = 0;
-				s.vy = 15;
+				s.vy = j*10;
 			}
 
 			s.x += s.vx*dt;
@@ -221,7 +213,7 @@ inline bool Sand::Draw(void)
 		if (s.y < window.bottom - s.r || s.y > window.top + 4*s.r)
 		{
 			s.x = rand()/(float)RAND_MAX*window.right/8+window.right*7/16;
-			s.y = window.top + R;
+			s.y = window.top + 2*R;
 			s.vx = rand()/(float)RAND_MAX*10.0f-5.0f;
 			s.vy = rand()/(float)RAND_MAX*-1.0f;
 		}
@@ -229,7 +221,7 @@ inline bool Sand::Draw(void)
 		x = (int)(s.x/R);
 		y = (int)(s.y/R);
 		if (x >= 0 && x < locw && y >= 0 && y < loch)
-			location[x+y*loch].push_back(i);
+			location[x+y*locw].push_back(i);
 
 		i++;
 	} while (i < N);
@@ -248,10 +240,9 @@ inline bool Sand::Draw(void)
 			{
 				if (x >= 0 && y >= 0 && x < locw && y < loch)
 				{
-					//cout << x << ":" << y << " " << location[x+y*loch].size() << " " << x+y*loch << endl;
-					for (j = 0; j < location[x+y*loch].size(); j++)
+					for (j = 0; j < location[x+y*locw].size(); j++)
 					{
-						check = location[x+y*loch].at(j);
+						check = location[x+y*locw].at(j);
 
 						sandtype &s2 = sand[check];
 
@@ -269,7 +260,6 @@ inline bool Sand::Draw(void)
 
 							if (va2 - va1 < 0)
 							{
-
 								vb1 = s.vy*ax - s.vx*ay;
 								vb2 = s2.vy*ax - s2.vx*ay;
 
@@ -282,10 +272,10 @@ inline bool Sand::Draw(void)
 								s.vy = vaP1*ay + vb1*ax;
 								s2.vx = vaP2*ax - vb2*ay;
 								s2.vy = vaP2*ay + vb2*ax;
-
-								s2.x = s.x + (s.r+s2.r)*ax;
-								s2.y = s.y + (s.r+s2.r)*ay;
 							}
+
+							s2.x = s.x + (s.r+s2.r)*ax;
+							s2.y = s.y + (s.r+s2.r)*ay;
 						}
 					}
 				}
