@@ -21,6 +21,8 @@ struct sandtype
 
 	float m, mi;
 	float d;
+
+	bool last;
 };
 
 class Sand : public GameController

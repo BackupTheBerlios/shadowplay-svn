@@ -4,8 +4,8 @@
 
 #include "Sand.h"
 
-#define N 1000
-#define R 1
+#define N 100
+#define R 2
 
 using namespace std;
 
@@ -21,16 +21,18 @@ Sand::Sand()
 		sand[i].vx = rand()/(float)RAND_MAX*30.0f-15.0f;
 		sand[i].vy = rand()/(float)RAND_MAX*30.0f-15.0f;
 		sand[i].ax = 0;
-		sand[i].ay = -5;
+		sand[i].ay = -2;
 
 		sand[i].r = R+.5f;
 		sand[i].m = 10;
 		sand[i].mi = 1.0f/sand[i].m;
-		sand[i].d = 0.95f;
+		sand[i].d = 0.75f;
 
 		sand[i].cr = rand()/(float)RAND_MAX;
 		sand[i].cg = rand()/(float)RAND_MAX;
 		sand[i].cb = rand()/(float)RAND_MAX;
+
+		sand[i].last = 0;
 	}
 
 	locw = (int)((window.right-window.left)/R)+1;
@@ -49,7 +51,7 @@ Sand::~Sand(void)
 inline bool Sand::Draw(void)
 {
 	static float dx, dy, distance, ax, ay, va1, vb1, va2, vb2, vaP1, vaP2;
-	static int i, j, x, y, posxl, posxr, posyl, posyr, posx, posy, check;
+	static int i, j, x, y, posxl, posxr, posyl, posyr, posx, posy, check, count;
 
 	tick = SDL_GetTicks();
 	dt = (float)(tick-lastTick)/100;
@@ -91,44 +93,91 @@ inline bool Sand::Draw(void)
 
 		// Check if it's in a shadow
 		check = 0;
-		for (x = posxl; x <= posxr; x++)
-			for (y = posyl; y <= posyr; y++)
+		count = 0;
+		j = 0;
+		do
+		{
+			// Check the top
+			y = posy+j;
+			for (x = posx-j; x <= posx+j; x++)
+			{
 				if (x >= 0 && y >= 0 && x < shadowbuffer->w && y < shadowbuffer->h &&
-						shadowbuffer->buffer[x+y*shadowbuffer->w] < 100 &&
-						hypotf(x-posx, y-posy) <= s.r)
+						shadowbuffer->buffer[x+y*shadowbuffer->w] < 100)
 				{
-					check++;
+					if (hypot(x-posx, y-posy) <= s.r)
+						check++;
+
+					count++;
 					ax -= x - posx;
 					ay -= y - posy;
 				}
+			}
 
-		if (check < 4)
-		{
-			s.x += s.vx*dt + 0.5f*s.ax*dt*dt;
-			s.y += s.vy*dt + 0.5f*s.ay*dt*dt;
-			s.vx += s.ax*dt;
-			s.vy += s.ay*dt;
-		}
-		else
-		{
-
-			j = (int)(posxr-posx);
-			do
+			// Check the bottom
+			y = posy-j;
+			for (x = posx-j; x <= posx+j; x++)
 			{
-				for (x = posx-j; x < posx+j; x++)
-					for (y = posy-j; y < posy+j; y++)
-					{
-						if (x >= 0 && y >= 0 && x < shadowbuffer->w && y < shadowbuffer->h &&
-								shadowbuffer->buffer[x+y*shadowbuffer->w] < 100)
-						{
-							check++;
-							ax -= x - posx;
-							ay -= y - posy;
-						}
-					}
-				j++;
-			} while (check < 10 && j <= R*2);
+				if (x >= 0 && y >= 0 && x < shadowbuffer->w && y < shadowbuffer->h &&
+						shadowbuffer->buffer[x+y*shadowbuffer->w] < 100)
+				{
+					if (hypot(x-posx, y-posy) <= s.r)
+						check++;
 
+					count++;
+					ax -= x - posx;
+					ay -= y - posy;
+				}
+			}
+
+			// Check to left
+			x = posx-j;
+			for (y = posy-j+1; y <= posy+j-1; y++)
+			{
+				if (x >= 0 && y >= 0 && x < shadowbuffer->w && y < shadowbuffer->h &&
+						shadowbuffer->buffer[x+y*shadowbuffer->w] < 100)
+				{
+					if (hypot(x-posx, y-posy) <= s.r)
+						check++;
+
+					count++;
+					ax -= x - posx;
+					ay -= y - posy;
+				}
+			}
+
+			// Check to right
+			x = posx+j;
+			for (y = posy-j+1; y <= posy+j-1; y++)
+			{
+				if (x >= 0 && y >= 0 && x < shadowbuffer->w && y < shadowbuffer->h &&
+						shadowbuffer->buffer[x+y*shadowbuffer->w] < 100)
+				{
+					if (hypot(x-posx, y-posy) <= s.r)
+						check++;
+
+					count++;
+					ax -= x - posx;
+					ay -= y - posy;
+				}
+			}
+
+			if (j > R && check < R)
+			{
+				s.x += s.vx*dt + 0.5f*s.ax*dt*dt;
+				s.y += s.vy*dt + 0.5f*s.ay*dt*dt;
+				s.vx += s.ax*dt;
+				s.vy += s.ay*dt;
+				s.last = 1;
+				break;
+			}
+
+			j++;
+		} while (count < R && j <= R*2);
+
+		
+		// Bounce the thing off the shadow
+		if (count >= R)
+		{
 			distance = hypotf(ax, ay);
 			if (distance > 0.0001)
 			{
@@ -143,7 +192,7 @@ inline bool Sand::Draw(void)
 					vb1 = s.vy*ax - s.vx*ay;
 
 					// New velocity in these axes (after collision)
-					vaP1 = va1 - (1+s.d)*va1;
+					vaP1 = s.d*va1*.2;
 
 					// Undo the projections
 					s.vx = vaP1*ax - vb1*ay;
@@ -152,13 +201,15 @@ inline bool Sand::Draw(void)
 			}
 			else
 			{
-				s.vy = 2;
+				s.vx = 0;
+				s.vy = 15;
 			}
 
-			s.x += s.vx*dt*check/(R*R);
-			s.y += s.vy*dt*check/(R*R);
-		}
+			s.x += s.vx*dt;
+			s.y += s.vy*dt;
 
+			s.last = 0;
+		}
 
 		// bounce it off the walls
 		if (s.x >= window.right - s.r)
@@ -169,10 +220,10 @@ inline bool Sand::Draw(void)
 		// reset if off the screen
 		if (s.y < window.bottom - s.r || s.y > window.top + 4*s.r)
 		{
-			s.x = rand()/(float)RAND_MAX*window.right/4+window.right*3/8;
+			s.x = rand()/(float)RAND_MAX*window.right/8+window.right*7/16;
 			s.y = window.top + R;
 			s.vx = rand()/(float)RAND_MAX*10.0f-5.0f;
-			s.vy = rand()/(float)RAND_MAX*-2.0f;
+			s.vy = rand()/(float)RAND_MAX*-1.0f;
 		}
 
 		x = (int)(s.x/R);
@@ -237,7 +288,6 @@ inline bool Sand::Draw(void)
 							}
 						}
 					}
-					location[x+y*loch].clear();
 				}
 			}
 
@@ -257,7 +307,7 @@ inline bool Sand::Draw(void)
 
 		glColor3f(s.cr, s.cg, s.cb);
 
-		gluDisk(quadratic, 0.0f, s.r, 20, 1);
+		gluDisk(quadratic, 0.0f, s.r, 8, 1);
 		/*
 		   glBegin(GL_QUADS);
 		   glVertex3f(s.r, s.r, 0.0f);
