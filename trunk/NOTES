@@ -1,17 +1,22 @@
-Shadowplay - 07022005
+Shadowplay - 07222005
 
-This is the first release of shadowplay. Right now it has two modes. The default is basically just a test mode to check the video. The second is the start of a falling sand demo. The particals don't collide yet, but they do stop moving when they hit a shadow.
+This is the second release of shadowplay. Right now it has two modes. The default is basically just a test mode to check the video. The second is a falling sand demo. It is basically a demonstration of how to interact with the shadow. It might not be the best way to do it, but it seems to work quite well. Right now I get ~35 fps with 3000 particles on my Athlon XP 1700+.
 
 To select which of the modes you want to use put a '-s' switch on the command line when you start it up.
 
 The keyboard can have some control over the input and output.
 '+'/'-': Changes the threshold for what is considered a shadow.
 'i': Inverts the shadow buffer.
+'n': Normalizes the video to help remove the background from the video.
 'v': Flips the background between the actual video and the shadow buffers.
 'f': Outputs the fps on the console.
 'c': For the default run mode this will display a spinning cube with the video displayed on all the faces.
 
-To create a new toy just make a new subclass of GameController and overwrite the Draw method. Then just modify main.cpp and Makefile to compile the new class in and allow you to select it from the commandline.
+I've found that to get a good shadow I use a dark background and light subject (me). I normalize the image and then decrease the threshold until I get noise and back off a little bit. If you are trying to actually use shadows as the input you might have to play around with it a little bit more to get a good solid shadow.
+
+You might want to play around with the compile optimizations to make it as fast as possible. The one that is commented out is what I use. It seems to be pretty good. I'm no wizz with optimizations though.
+
+To create a new toy make a new subclass of GameController and overwrite the Draw method. Then just modify main.cpp and Makefile to compile the new class in and allow you to select it from the commandline.
 
 Known problems:
 - The first time I start the program up after a reboot the video is messed up. To work around this run a different TV program like tvtime.
