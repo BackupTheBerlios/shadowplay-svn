@@ -3,8 +3,8 @@
 
 #include "Sand.h"
 
-#define N 1500
-#define R .75
+#define N 2000
+#define R 3
 
 using namespace std;
 
@@ -22,7 +22,7 @@ Sand::Sand()
 		sand[i].ax = 0;
 		sand[i].ay = -2;
 
-		sand[i].r = R+.5f;
+		sand[i].r = R;
 		sand[i].m = 10;
 		sand[i].mi = 1.0f/sand[i].m;
 		sand[i].d = 0.5f;
@@ -274,8 +274,17 @@ inline bool Sand::Draw(void)
 								s2.vy = vaP2*ay + vb2*ax;
 							}
 
-							s2.x = s.x + (s.r+s2.r)*ax;
-							s2.y = s.y + (s.r+s2.r)*ay;
+/*
+							s.x -= (s.r+s2.r)*ax*.5f;
+							s.y -= (s.r+s2.r)*ay*.5f;
+							if ((int)(s.x/R)+(int)(s.y/R)*locw != x*y*locw)
+								location[(int)(s.x/R)+(int)(s.y/R)*locw].push_back(i);
+
+							s2.x += (s.r+s2.r)*ax*.5f;
+							s2.y += (s.r+s2.r)*ay*.5f;
+							if ((int)(s2.x/R)+(int)(s2.y/R)*locw != x*y*locw)
+								location[(int)(s2.x/R)+(int)(s2.y/R)*locw].push_back(check);
+*/
 						}
 					}
 				}
