@@ -45,7 +45,7 @@ Cover::Cover()
 	}
 
 	score = 0;
-	scoreinc = .005;
+	scoreinc = .02;
 
 	quadratic = gluNewQuadric();
 	gluQuadricNormals(quadratic, GLU_SMOOTH);
@@ -145,7 +145,11 @@ inline bool Cover::Draw(void)
 	}
 	score += scoreinc*(p2-p1);
 
+	if (score > videobuffer->w/2 || score < videobuffer->w/-2)
+		score = 0;
+	
 
+	// Copy the image to a texture
 	if (displaytype == 0)
 		for (int j=0; j < videobuffer->h; ++j)
 			memcpy(&teximage[j*tex_w], &videobuffer->buffer[j*videobuffer->w], videobuffer->w);
