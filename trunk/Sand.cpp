@@ -4,7 +4,7 @@
 #include "Sand.h"
 
 #define N 2000
-#define R 3
+#define R 2
 
 using namespace std;
 
@@ -23,9 +23,9 @@ Sand::Sand()
 		sand[i].ay = -2;
 
 		sand[i].r = R;
-		sand[i].m = 10;
+		sand[i].m = 1;
 		sand[i].mi = 1.0f/sand[i].m;
-		sand[i].d = 0.5f;
+		sand[i].d = 0.75f;
 
 		sand[i].cr = rand()/(float)RAND_MAX;
 		sand[i].cg = rand()/(float)RAND_MAX;
@@ -160,18 +160,17 @@ inline bool Sand::Draw(void)
 				}
 			}
 
-			if (j > R+1 && check < R)
-			{
-				s.x += s.vx*dt + 0.5f*s.ax*dt*dt;
-				s.y += s.vy*dt + 0.5f*s.ay*dt*dt;
-				s.vx += s.ax*dt;
-				s.vy += s.ay*dt;
-				s.last = 1;
-				break;
-			}
-
 			j++;
-		} while (count < R && j <= R*4);
+		} while ((count > j*j || j <= R+1) && j <= R*4);
+
+		if (check < R)
+		{
+			s.vx += s.ax*dt;
+			s.vy += s.ay*dt;
+			s.x += s.vx*dt;
+			s.y += s.vy*dt;
+			s.last = 1;
+		}
 		
 		// Bounce the thing off the shadow
 		if (count >= R)
@@ -184,7 +183,7 @@ inline bool Sand::Draw(void)
 
 				// Projection of the velocity in these axes
 				//va1 = s.d*(s.vx*ax + s.vy*ay);
-				va1 = -1.0f*j;
+				va1 = -1.2f*(j-R/2)/R;
 				vb1 = s.vy*ax - s.vx*ay;
 
 				// Undo the projections
@@ -194,7 +193,7 @@ inline bool Sand::Draw(void)
 			else
 			{
 				s.vx = 0;
-				s.vy = j*10;
+				s.vy = j/R*3;
 			}
 
 			s.x += s.vx*dt;
@@ -210,10 +209,10 @@ inline bool Sand::Draw(void)
 			s.vx = fabs(s.vx*s.d);
 
 		// reset if off the screen
-		if (s.y < window.bottom - s.r || s.y > window.top + 4*s.r)
+		if (s.y < window.bottom - s.r || s.y > window.top + 40*s.r)
 		{
 			s.x = rand()/(float)RAND_MAX*window.right/8+window.right*7/16;
-			s.y = window.top + 2*R;
+			s.y = window.top + rand()/(float)RAND_MAX*20*R+10*R;
 			s.vx = rand()/(float)RAND_MAX*10.0f-5.0f;
 			s.vy = rand()/(float)RAND_MAX*-1.0f;
 		}
@@ -274,17 +273,15 @@ inline bool Sand::Draw(void)
 								s2.vy = vaP2*ay + vb2*ax;
 							}
 
-/*
-							s.x -= (s.r+s2.r)*ax*.5f;
-							s.y -= (s.r+s2.r)*ay*.5f;
-							if ((int)(s.x/R)+(int)(s.y/R)*locw != x*y*locw)
-								location[(int)(s.x/R)+(int)(s.y/R)*locw].push_back(i);
+							s.x -= (s.r+s2.r-distance)*ax*.5f;
+							s.y -= (s.r+s2.r-distance)*ay*.5f;
+						//	if ((int)(s.x/R)+(int)(s.y/R)*locw != x*y*locw)
+						//		location[(int)(s.x/R)+(int)(s.y/R)*locw].push_back(i);
 
-							s2.x += (s.r+s2.r)*ax*.5f;
-							s2.y += (s.r+s2.r)*ay*.5f;
-							if ((int)(s2.x/R)+(int)(s2.y/R)*locw != x*y*locw)
-								location[(int)(s2.x/R)+(int)(s2.y/R)*locw].push_back(check);
-*/
+							s2.x += (s.r+s2.r-distance)*ax*.5f;
+							s2.y += (s.r+s2.r-distance)*ay*.5f;
+						//	if ((int)(s2.x/R)+(int)(s2.y/R)*locw != x*y*locw)
+						//		location[(int)(s2.x/R)+(int)(s2.y/R)*locw].push_back(check);
 						}
 					}
 				}
