@@ -3,8 +3,8 @@
 
 #include "Sand.h"
 
-#define N 2000
-#define R 2
+#define N 1000
+#define R 3
 
 using namespace std;
 
@@ -25,7 +25,7 @@ Sand::Sand()
 		sand[i].r = R;
 		sand[i].m = 1;
 		sand[i].mi = 1.0f/sand[i].m;
-		sand[i].d = 0.75f;
+		sand[i].d = 0.5f;
 
 		sand[i].cr = rand()/(float)RAND_MAX;
 		sand[i].cg = rand()/(float)RAND_MAX;
@@ -73,8 +73,7 @@ inline bool Sand::Draw(void)
 		location[i].clear();
 
 	// movement loop
-	i = 0;
-	do
+	for (i = 0; i < N; i++)
 	{
 		sandtype &s = sand[i];
 	
@@ -221,14 +220,11 @@ inline bool Sand::Draw(void)
 		y = (int)(s.y/R);
 		if (x >= 0 && x < locw && y >= 0 && y < loch)
 			location[x+y*locw].push_back(i);
-
-		i++;
-	} while (i < N);
+	}
 
 
 	// collision loop
-	i = 0;
-	do
+	for (i = 0; i < N; i++)
 	{
 		sandtype &s = sand[i];
 
@@ -286,13 +282,10 @@ inline bool Sand::Draw(void)
 					}
 				}
 			}
-
-		i++;
-	} while (i < N);
+	}
 
 	// draw loop
-	i = 0;
-	do
+	for (i = 0; i < N; i++)
 	{
 		sandtype &s = sand[i];
 		//s = sandtemp[i];
@@ -312,9 +305,7 @@ inline bool Sand::Draw(void)
 		   glVertex3f(s.r, -s.r, 0.0f);
 		   glEnd();
 		 */
-
-		i++;
-	} while (i < N);
+	}
 
 	glEnable(GL_TEXTURE_2D);
 	glColor3f(1.0f, 1.0f, 1.0f);
