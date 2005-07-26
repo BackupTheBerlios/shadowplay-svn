@@ -3,8 +3,8 @@
 
 #include "Sand.h"
 
-#define N 1000
-#define R 3
+#define N 1500
+#define R 2
 
 using namespace std;
 
@@ -182,7 +182,7 @@ inline bool Sand::Draw(void)
 
 				// Projection of the velocity in these axes
 				//va1 = s.d*(s.vx*ax + s.vy*ay);
-				va1 = -1.2f*(j-R/2)/R;
+				va1 = -1.4f*(j-R/2)/R;
 				vb1 = s.vy*ax - s.vx*ay;
 
 				// Undo the projections
@@ -192,7 +192,7 @@ inline bool Sand::Draw(void)
 			else
 			{
 				s.vx = 0;
-				s.vy = j/R*3;
+				s.vy = j/R*4;
 			}
 
 			s.x += s.vx*dt;

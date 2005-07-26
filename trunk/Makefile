@@ -1,7 +1,7 @@
 COMPILE=c++ -O3 -mmmx -msse -m3dnow -finline-limit=2000 -frerun-loop-opt -march=athlon-xp `sdl-config --cflags`
 #COMPILE=c++ -O3 `sdl-config --cflags`
 
-all: main.o
+all: main.o Makefile
 
 main.o : Shadow.o VideoInput.o GameController.o Sand.o Cover.o KeyInput.o main.cpp
 	$(COMPILE) `sdl-config --libs` -L/usr/X11R6/lib/ -lGL -lGLU -o shadowplay Shadow.o VideoInput.o KeyInput.o GameController.o Sand.o Cover.o main.cpp

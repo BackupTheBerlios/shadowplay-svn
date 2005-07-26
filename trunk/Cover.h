@@ -1,8 +1,6 @@
 #ifndef COVER_H
 #define COVER_H
 
-#include <vector>
-
 #include "GameController.h"
 #include "VideoInput.h"
 #include "Shadow.h"
@@ -16,7 +14,7 @@ struct circletype
 	float vx, vy;
 
 	float r;
-	float cr, cg, cb ;
+	float cr, cg, cb;
 
 	bool covered;
 	int player;

@@ -65,6 +65,7 @@ inline bool Cover::Draw(void)
 	dt = (float)(tick-lastTick)/100;
 	lastTick = tick;
 
+	SDL_Delay(10);
 
 	for (i = 0; i < N; i++)
 	{
@@ -73,13 +74,25 @@ inline bool Cover::Draw(void)
 		
 		// bounce it off the walls
 		if (circle[i].x >= window.right - circle[i].r)
+		{
+			circle[i].x = window.right - circle[i].r;
 			circle[i].vx = -1.0f*fabs(circle[i].vx);
+		}
 		if (circle[i].x <= window.left + circle[i].r)
+		{
+			circle[i].x = window.left + circle[i].r;
 			circle[i].vx = fabs(circle[i].vx);
+		}
 		if (circle[i].y >= window.top - circle[i].r)
+		{
+			circle[i].y = window.top - circle[i].r;
 			circle[i].vy = -1.0f*fabs(circle[i].vy);
+		}
 		if (circle[i].y <= window.bottom + circle[i].r)
+		{
+			circle[i].y = window.bottom + circle[i].r;
 			circle[i].vy = fabs(circle[i].vy);
+		}
 
 		// bounce off each other
 		for (j = 0; j < N; j++)
