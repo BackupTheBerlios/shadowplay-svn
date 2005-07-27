@@ -1,0 +1,81 @@
+# Test level
+<LevelSetBegin>
+	<Name>
+		Test Level Set
+	<LevelBegin>
+		<Number>
+			1
+		<Name>
+			Test Level One
+		<PlayerBegin>
+			<GoalNumbers>
+				1
+			<PlayerColor>
+				1.0 .2 .2
+			<PlayerVertexBegin>
+				150 110
+				170 110
+				170 130
+				150 130
+			<PlayerVertexEnd>
+		<PlayerEnd>
+
+		<GoalBegin>
+			<GoalNumber>
+				1
+			<GoalColor>
+				.5 .1 .1
+			<GoalVertexBegin>
+				0 0
+				320 0
+				320 10
+				0 10
+			<GoalVertexEnd>
+		<GoalEnd>
+		
+		<WallBegin>
+			<WallVertexBegin>
+				0 0
+				320 0
+				320 10
+				0 10
+			<WallVertexEnd>
+		<WallEnd>
+		<WallBegin>
+			<WallVertexBegin>
+				0 10
+				10 10
+				10 230
+				0 230
+			<WallVertexEnd>
+		<WallEnd>
+		<WallBegin>
+			<WallVertexBegin>
+				0 230
+				320 230
+				320 240
+				0 240
+			<WallVertexEnd>
+		<WallEnd>
+		<WallBegin>
+			<WallVertexBegin>
+				310 10
+				320 10
+				320 230
+				310 230
+			<WallVertexEnd>
+		<WallEnd>
+		<WallBegin>
+			<WallVertexBegin>
+				100 100
+				220 100
+				220 140
+				210 140
+				210 110
+				110 110
+				110 140
+				100 140
+			<WallVertexEnd>
+		<WallEnd>
+	<LevelEnd>
+<LevelSetEnd>

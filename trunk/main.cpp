@@ -1,19 +1,21 @@
 #include "GameController.h"
 #include "Sand.h"
 #include "Cover.h"
+#include "SquishMaze.h"
 
 #include <getopt.h>
 
 #include <iostream>
 using namespace std;
 
-static const char short_options [] = ":sch";
+static const char short_options [] = ":scmh";
 
 static const struct option long_options [] = {
 	{"help",  no_argument, NULL, 'h' },
 	{"sand",  no_argument, NULL, 's' },
 	{"cover", no_argument, NULL, 'c' },
-	{0, 0, 0}
+	{"maze",  no_argument, NULL, 'm' },
+	{0, 0, 0, 0}
 };
 
 int main(int argc, char **argv)
@@ -50,9 +52,16 @@ int main(int argc, char **argv)
 				started = true;
 				break;
 
+			case 'm':
+				cout << "main: Creating the SquishMaze object\n";
+				gamecontroller = new SquishMaze();
+				started = true;
+				break;
+
 			case 'h':
-				cout << "-s | --sand	Play with sand as it falls\n";
-				cout << "-c | --cover	Two player game where you have to cover some circles\n";
+				cout << "-s | --sand	Play with sand as it falls.\n";
+				cout << "-c | --cover	Two player game where you have to cover some circles.\n";
+				cout << "-m | --maze	A two player squishy maze. Get to the other side first!\n";
 				exit(EXIT_SUCCESS);
 
 			default:
