@@ -11,15 +11,14 @@
 #include <string>
 #include <vector>
 
-
+//
 // Data structures and types to hold the levelset
+//
 
-typedef enum 
+struct gldatatype
 {
-	PLAYER,
-	WALL,
-	GOAL,
-} polytypetype;
+	GLdouble d [6];
+};
 
 struct pointtype
 {
@@ -40,25 +39,24 @@ struct connectortype
 
 struct playertype
 {
-	vector<GLdouble *> data;
+	vector<gldatatype> data;
 	vector<pointtype> vel;
 
 	vector<connectortype> con;
 
 	colortype color;
-
 	vector<int> goalnumbers;
 };
 
 struct walltype
 {
-	vector<GLdouble *> data;
+	vector<gldatatype> data;
 	colortype color;
 };
 
 struct goaltype
 {
-	vector<GLdouble *> data;
+	vector<gldatatype> data;
 
 	colortype color;
 	int goalnumber;
@@ -92,7 +90,7 @@ class TessPoly
   public:
 	void Init(GLvoid);
 	void SetWindingRule(GLenum windingrule) { gluTessProperty(tobj, GLU_TESS_WINDING_RULE, windingrule); };
-	void RenderContour(vector<GLdouble [6]> poly);
+	void RenderContour(vector<gldatatype> &poly);
 	void BeginPolygon(GLvoid) { gluTessBeginPolygon(tobj, NULL); };
 	void EndPolygon(GLvoid) { gluTessEndPolygon(tobj); };
 	void BeginContour(GLvoid) { gluTessBeginContour(tobj); };
@@ -113,16 +111,17 @@ class SquishMaze : public GameController
 
   private:
 	string GetNextLine(fstream &file);
+	void ShowLevelSet(void);
 	void Tokenize(const string& str, vector<string>& tokens, const string& del = " ");
-	bool InPoly(vector<GLdouble [6]> poly, pointtype p);
+	bool InPoly(vector<gldatatype> &poly, pointtype p);
 
 	levelsettype *levelset;
+	int currentlevel;
 	
 	int tick, lastTick;
 	float dt;
 
 	TessPoly *poly;
 };
-
 
 #endif

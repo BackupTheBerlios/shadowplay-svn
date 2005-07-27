@@ -11,7 +11,7 @@
 			<GoalNumbers>
 				1
 			<PlayerColor>
-				1.0 .2 .2
+				.2 .2 .8
 			<PlayerVertexBegin>
 				150 110
 				170 110
@@ -19,17 +19,17 @@
 				150 130
 			<PlayerVertexEnd>
 		<PlayerEnd>
-
+		
 		<GoalBegin>
 			<GoalNumber>
 				1
 			<GoalColor>
-				.5 .1 .1
+				.85 .8 9
 			<GoalVertexBegin>
-				0 0
-				320 0
-				320 10
-				0 10
+				150 30
+				170 30
+				170 50
+				150 50
 			<GoalVertexEnd>
 		<GoalEnd>
 		
