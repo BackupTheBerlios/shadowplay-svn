@@ -35,6 +35,7 @@ struct connectortype
 	int a, b;
 	float k;
 	float c;
+	float l;
 };
 
 struct playertype
@@ -113,7 +114,9 @@ class SquishMaze : public GameController
 	string GetNextLine(fstream &file);
 	void ShowLevelSet(void);
 	void Tokenize(const string& str, vector<string>& tokens, const string& del = " ");
-	bool InPoly(vector<gldatatype> &poly, pointtype p);
+	bool InPoly(vector<gldatatype> &poly, float x, float y);
+	void ResolveCollision(playertype &player, int n, vector<gldatatype> &poly);
+	bool LinesIntersect(gldatatype &a1, gldatatype &a2, gldatatype &b1, gldatatype &b2);
 
 	levelsettype *levelset;
 	int currentlevel;

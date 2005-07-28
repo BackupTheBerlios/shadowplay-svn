@@ -133,7 +133,11 @@ bool SquishMaze::LoadLevelSet(string levelsetfilename)
 									while(!file.eof() && (str.empty() || str.compare("<PlayerVertexEnd>") != 0))
 									{
 										gldatatype vertextemp;
-										
+
+										pointtype veltemp;
+										veltemp.x = 0;
+										veltemp.y = 0;
+
 										vector<string> tokens;
 										str = GetNextLine(file);
 										Tokenize(str, tokens, " ");
@@ -142,8 +146,9 @@ bool SquishMaze::LoadLevelSet(string levelsetfilename)
 										{
 											vertextemp.d[0] = atof(tokens.at(0).c_str());
 											vertextemp.d[1] = atof(tokens.at(1).c_str());
-											vertextemp.d[2] = 0;
+											vertextemp.d[2] = -1;
 											playertemp.data.push_back(vertextemp);
+											playertemp.vel.push_back(veltemp);
 										}
 										else if (str.compare("<PlayerVertexEnd>") == 0) {}
 										else
@@ -162,6 +167,21 @@ bool SquishMaze::LoadLevelSet(string levelsetfilename)
 								playertemp.data.at(i).d[4] = playertemp.color.g;
 								playertemp.data.at(i).d[5] = playertemp.color.b;
 							}
+
+							// Create springs between all the vertices
+							for (int i = 0; i < playertemp.data.size()-1; i++)
+								for (int j = i+1; j < playertemp.data.size(); j++)
+								{
+									connectortype con;
+	
+									con.a = i;
+									con.b = j;
+									con.k = .3;
+									con.c = .1;
+									con.l = hypotf(playertemp.data.at(i).d[0]-playertemp.data.at(j).d[0],
+													playertemp.data.at(i).d[1]-playertemp.data.at(j).d[1]);
+									playertemp.con.push_back(con);
+								}
 
 							leveltemp.player.push_back(playertemp);
 						}
@@ -365,6 +385,9 @@ void SquishMaze::ShowLevelSet(void)
 					cout << p.data.at(k).d[l] << " ";
 				cout << endl;
 			}
+			cout << "    Player connectors:\n";
+			for (int k = 0; k < p.con.size(); k++)
+				cout << "      " << p.con.at(k).a << "->" << p.con.at(k).b << " " << p.con.at(k).l << endl;
 		}
 		for (int j = 0; j < l.wall.size(); j++)
 		{
@@ -433,7 +456,8 @@ void SquishMaze::Tokenize(const string& str, vector<string>& tokens, const strin
 
 inline bool SquishMaze::Draw(void)
 {
-	int i, j;
+	int i, j, k;
+	float x, y, accel, d;
 
 	leveltype &l = levelset->level.at(currentlevel-1);
 	
@@ -441,7 +465,55 @@ inline bool SquishMaze::Draw(void)
 	dt = (float)(tick-lastTick)/100;
 	lastTick = tick;
 
-	
+	// Collide the players
+	for (i = 0; i < l.player.size(); i++)
+	{
+		// Check all of the points in this object against all of the other polygons
+		for (j = 0; j < l.player.at(i).data.size(); j++)
+		{
+			x = l.player.at(i).data.at(j).d[0];
+			y = l.player.at(i).data.at(j).d[1];
+			
+			for (k = 0; k < l.player.size(); k++)
+				if (InPoly(l.player.at(k).data, x, y) && k != i)
+					ResolveCollision(l.player.at(i), j, l.player.at(k).data);
+					
+			for (k = 0; k < l.wall.size(); k++)
+				if (InPoly(l.wall.at(k).data, x, y))
+					ResolveCollision(l.player.at(i), j, l.wall.at(k).data);
+					
+			for (k = 0; k < l.goal.size(); k++)
+				if (InPoly(l.goal.at(k).data, x, y))
+					ResolveCollision(l.player.at(i), j, l.goal.at(k).data);
+		}
+	}
+
+	for (i = 0; i < l.player.size(); i++)
+	{
+		playertype &p = l.player.at(i);
+		for (j = 0; j < l.player.at(i).data.size(); j++)
+		{
+			for (k = 0; k < p.con.size(); k++)
+			{
+				x = (p.data.at(p.con.at(k).b).d[0]-p.data.at(p.con.at(k).a).d[0]);
+				y = (p.data.at(p.con.at(k).b).d[1]-p.data.at(p.con.at(k).a).d[1]);
+
+				d = hypotf(x, y);
+				x /= d;
+				y /= d;
+				accel = p.con.at(k).k*(p.con.at(k).l-d);
+				
+				p.vel.at(p.con.at(k).a).x -= accel*x*dt;
+				p.vel.at(p.con.at(k).a).y -= accel*y*dt;
+				
+				p.vel.at(p.con.at(k).b).x += accel*x*dt;
+				p.vel.at(p.con.at(k).b).y += accel*y*dt;
+			}
+			
+			p.data.at(j).d[0] += p.vel.at(j).x*dt;
+			p.data.at(j).d[1] += p.vel.at(j).y*dt;
+		}
+	}
 
 	//
 	// Drawing stuff from here on
@@ -512,9 +584,138 @@ inline bool SquishMaze::Draw(void)
 	return true;
 }
 
-bool SquishMaze::InPoly(vector<gldatatype> &poly, pointtype p)
+void SquishMaze::ResolveCollision(playertype &player, int n, vector<gldatatype> &poly)
 {
+	vector<int> linelist;
+	bool intersect;
+	float dx, dy, l;
+	
+	for (int i = 0; i < poly.size(); i++)
+	{
+		intersect = false;
+
+		for (int j = 0; j < player.data.size(); j++)
+			if (LinesIntersect(poly.at(i), poly.at((i+1)%poly.size()),
+					player.data.at(j), player.data.at((j+1)%player.data.size())))
+				intersect = true;
+
+		if (intersect)
+			linelist.push_back(i);
+	}
+
+	float nx = 0, ny = 0;
+	for (int i = 0; i < linelist.size(); i++)
+	{
+		dx = poly.at((linelist.at(i)+1)%poly.size()).d[0]-poly.at(linelist.at(i)).d[0];
+		dy = poly.at((linelist.at(i)+1)%poly.size()).d[1]-poly.at(linelist.at(i)).d[1];
+
+		l = 1/hypotf(dx, dy);
+		nx += dy*l;
+		ny -= dx*l;
+	}
+
+	l = hypotf(nx, ny);
+	if (l > 0)
+	{
+		nx /= l;
+		ny /= l;
+	}
+	else if (linelist.size() > 0)
+	{
+		dx = poly.at((linelist.at(0)+1)%poly.size()).d[0]-poly.at(linelist.at(0)).d[0];
+		dy = poly.at((linelist.at(0)+1)%poly.size()).d[1]-poly.at(linelist.at(0)).d[1];
+
+		l = 1/hypotf(dx, dy);
+		nx = dy*l;
+		ny = dx*l;
+	}
+	else
+	{
+		nx = 0;
+		ny = 1;
+		cout << "There seems to be no collision, but it says there is\n";
+	}
+
+	// Use the normal as if it were the surface it was bouncing off to find the new velocity
+
+	pointtype &vel = player.vel.at(n);
+	
+	// Projection of the velocities in these axes
+	float va1 = vel.x*nx + vel.y*ny;
+
+	if (va1 > 0)
+	{
+		float vb1 = vel.y*nx - vel.x*ny;
+		// New velocities in these axes (after collision)
+		va1 -= .5*(1+.4)*va1;
+
+		// Undo the projections
+		vel.x = va1*nx - vb1*ny;
+		vel.y = va1*ny + vb1*nx;
+	}
+	else if (va1 < 0 && va1 > -.2)
+	{
+		float vb1 = vel.y*nx - vel.x*ny;
+		// New velocities in these axes (after collision)
+		va1 = -.2;
+
+		// Undo the projections
+		vel.x = va1*nx - vb1*ny;
+		vel.y = va1*ny + vb1*nx;
+	}
+}
+
+bool SquishMaze::LinesIntersect(gldatatype &a1, gldatatype &a2, gldatatype &b1, gldatatype &b2)
+{
+	float xi, i1, i2, m1, m2;
+	
+	if (a2.d[0]-a1.d[0] != 0)
+		m1 = (a2.d[1]-a1.d[1])/(a2.d[0]-a1.d[0]);
+	else // Vertical line
+	{
+		if (b2.d[0] != b1.d[0])
+			m2 = (b2.d[1]-b1.d[1])/(b2.d[0]-b1.d[0]);
+		else // Both vertical
+			return false;
+
+		if ((b1.d[0]-a1.d[0])*(a1.d[0]-b2.d[0]) > 0 && (b1.d[1]-a1.d[1])*(a1.d[1]-b2.d[1]) > 0)
+			return true;
+		else
+			return false;
+	}
+
+	if (b2.d[0]-b1.d[0] != 0)
+		m2 = (b2.d[1]-b1.d[1])/(b2.d[0]-b1.d[0]);
+	else if ((a1.d[0]-b1.d[0])*(b1.d[0]-a2.d[0]) > 0 && (a1.d[1]-b1.d[1])*(b1.d[1]-a2.d[1]) > 0)
+		return true;
+	else
+		return false;
+	
+	i1 = a1.d[1]-m1*a1.d[0];
+	i2 = b1.d[1]-m1*b1.d[0];
+	if (m1 - m2 != 0)
+		xi = (i2-i1)/(m1-m2);
+	else // Parallel lines
+		return false;
+
+	if ((a1.d[0]-xi)*(xi-a2.d[0]) > 0 && (b1.d[0]-xi)*(xi-b2.d[0]) > 0)
+		return true;
+
 	return false;
+}
+
+bool SquishMaze::InPoly(vector<gldatatype> &poly, float x, float y)
+{
+	int i, j;
+	bool ret = false;
+	for (i = 0, j = poly.size()-1; i < poly.size(); j = i++)
+	{
+		if (((poly.at(i).d[1] <= y && y < poly.at(j).d[1]) || (poly.at(j).d[1] <= y && y < poly.at(i).d[1])) &&
+				(x < (poly.at(j).d[0] - poly.at(i).d[0])*(y - poly.at(i).d[1])/(poly.at(j).d[1] - poly.at(i).d[1]) + poly.at(i).d[0]))
+			ret = !ret;
+	}
+	return ret;
+
 }
 
 

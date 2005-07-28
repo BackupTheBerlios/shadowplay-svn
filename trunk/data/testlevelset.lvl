@@ -13,10 +13,10 @@
 			<PlayerColor>
 				.2 .2 .8
 			<PlayerVertexBegin>
-				150 110
-				170 110
-				170 130
-				150 130
+				160 105
+				180 125
+				160 145
+				140 125
 			<PlayerVertexEnd>
 		<PlayerEnd>
 		
