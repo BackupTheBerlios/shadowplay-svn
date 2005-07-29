@@ -15,8 +15,24 @@
 			<PlayerVertexBegin>
 				160 105
 				180 125
-				160 145
+				180 145
+				140 145
 				140 125
+			<PlayerVertexEnd>
+		<PlayerEnd>
+		
+		<PlayerBegin>
+			<GoalNumbers>
+				1
+			<PlayerColor>
+				.2 .8 .2
+			<PlayerVertexBegin>
+				60 105
+				80 150
+				40 150
+				#60 160
+				#40 140
+				#40 125
 			<PlayerVertexEnd>
 		<PlayerEnd>
 		

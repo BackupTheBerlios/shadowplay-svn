@@ -135,8 +135,8 @@ bool SquishMaze::LoadLevelSet(string levelsetfilename)
 										gldatatype vertextemp;
 
 										pointtype veltemp;
-										veltemp.x = 0;
-										veltemp.y = 0;
+										veltemp.x = rand()/(float)RAND_MAX*3-1.5;
+										veltemp.y = rand()/(float)RAND_MAX*3-1.5;
 
 										vector<string> tokens;
 										str = GetNextLine(file);
@@ -176,8 +176,8 @@ bool SquishMaze::LoadLevelSet(string levelsetfilename)
 	
 									con.a = i;
 									con.b = j;
-									con.k = .3;
-									con.c = .1;
+									con.k = .15;
+									con.c = .0005;
 									con.l = hypotf(playertemp.data.at(i).d[0]-playertemp.data.at(j).d[0],
 													playertemp.data.at(i).d[1]-playertemp.data.at(j).d[1]);
 									playertemp.con.push_back(con);
@@ -456,16 +456,18 @@ void SquishMaze::Tokenize(const string& str, vector<string>& tokens, const strin
 
 inline bool SquishMaze::Draw(void)
 {
-	int i, j, k;
+	int i, j, k, a, b;
 	float x, y, accel, d;
 
 	leveltype &l = levelset->level.at(currentlevel-1);
 	
 	tick = SDL_GetTicks();
 	dt = (float)(tick-lastTick)/100;
+	if (dt > .05)
+		dt = .05;
 	lastTick = tick;
 
-	// Collide the players
+	// Collide the players with all the other objects
 	for (i = 0; i < l.player.size(); i++)
 	{
 		// Check all of the points in this object against all of the other polygons
@@ -488,6 +490,7 @@ inline bool SquishMaze::Draw(void)
 		}
 	}
 
+
 	for (i = 0; i < l.player.size(); i++)
 	{
 		playertype &p = l.player.at(i);
@@ -495,19 +498,79 @@ inline bool SquishMaze::Draw(void)
 		{
 			for (k = 0; k < p.con.size(); k++)
 			{
-				x = (p.data.at(p.con.at(k).b).d[0]-p.data.at(p.con.at(k).a).d[0]);
-				y = (p.data.at(p.con.at(k).b).d[1]-p.data.at(p.con.at(k).a).d[1]);
+				a = p.con.at(k).a;
+				b = p.con.at(k).b;
+				x = (p.data.at(b).d[0]-p.data.at(a).d[0]);
+				y = (p.data.at(b).d[1]-p.data.at(a).d[1]);
 
 				d = hypotf(x, y);
 				x /= d;
 				y /= d;
-				accel = p.con.at(k).k*(p.con.at(k).l-d);
+
+				// Constrain the size of the block so that it can't blowup
+				if (d > 2*p.con.at(k).l)
+				{
+					p.data.at(a).d[0] += (d/2-p.con.at(k).l)*x;
+					p.data.at(a).d[1] += (d/2-p.con.at(k).l)*y;
+					p.data.at(b).d[0] -= (d/2-p.con.at(k).l)*x;
+					p.data.at(b).d[1] -= (d/2-p.con.at(k).l)*y;
+					d = 2*p.con.at(k).l;
+				}
+
+				// Spring force
+				accel = p.con.at(k).k*(p.con.at(k).l-d)*dt;
 				
-				p.vel.at(p.con.at(k).a).x -= accel*x*dt;
-				p.vel.at(p.con.at(k).a).y -= accel*y*dt;
+				p.vel.at(a).x -= accel*x;
+				p.vel.at(a).y -= accel*y;
 				
-				p.vel.at(p.con.at(k).b).x += accel*x*dt;
-				p.vel.at(p.con.at(k).b).y += accel*y*dt;
+				p.vel.at(b).x += accel*x;
+				p.vel.at(b).y += accel*y;
+
+				// Spring damping
+				accel = ((p.vel.at(b).x*x + p.vel.at(b).y*y) - (p.vel.at(a).x*x + p.vel.at(a).y*y))*p.con.at(k).c*dt;
+				
+				p.vel.at(a).x += accel*x;
+				p.vel.at(a).y += accel*y;
+				
+				p.vel.at(b).x -= accel*x;
+				p.vel.at(b).y -= accel*y;
+			}
+		}
+	}
+
+	for (i = 0; i < l.player.size(); i++)
+	{
+		playertype &p = l.player.at(i);
+
+		for (j = 0; j < l.player.at(i).data.size(); j++)
+		{
+			// Gravity
+			//p.vel.at(j).y -= 2*dt;
+			
+			// Bounce off the screen boundary just in case
+			if (p.data.at(j).d[0] <= window.left)
+			{
+				p.data.at(j).d[0] = window.left;
+				p.vel.at(j).x = fabs(p.vel.at(j).x);
+				p.vel.at(j).y *= .5;
+			}
+			if (p.data.at(j).d[0] >= window.right)
+			{
+				p.data.at(j).d[0] = window.right;
+				p.vel.at(j).x = -1*fabs(p.vel.at(j).x);
+				p.vel.at(j).y *= .5;
+			}
+			if (p.data.at(j).d[1] <= window.bottom)
+			{
+				p.data.at(j).d[1] = window.bottom;
+				p.vel.at(j).x = 0;
+				p.vel.at(j).y = fabs(p.vel.at(j).y);
+			}
+			if (p.data.at(j).d[1] >= window.top)
+			{
+				p.data.at(j).d[1] = window.top;
+				p.vel.at(j).x *= .5;
+				p.vel.at(j).y = -1*fabs(p.vel.at(j).y);
 			}
 			
 			p.data.at(j).d[0] += p.vel.at(j).x*dt;
@@ -643,7 +706,7 @@ void SquishMaze::ResolveCollision(playertype &player, int n, vector<gldatatype> 
 	// Projection of the velocities in these axes
 	float va1 = vel.x*nx + vel.y*ny;
 
-	if (va1 > 0)
+	if (va1 < 0)
 	{
 		float vb1 = vel.y*nx - vel.x*ny;
 		// New velocities in these axes (after collision)
@@ -653,11 +716,11 @@ void SquishMaze::ResolveCollision(playertype &player, int n, vector<gldatatype> 
 		vel.x = va1*nx - vb1*ny;
 		vel.y = va1*ny + vb1*nx;
 	}
-	else if (va1 < 0 && va1 > -.2)
+	else if (va1 >= 0 && va1 < .3)
 	{
 		float vb1 = vel.y*nx - vel.x*ny;
 		// New velocities in these axes (after collision)
-		va1 = -.2;
+		va1 = .3;
 
 		// Undo the projections
 		vel.x = va1*nx - vb1*ny;
@@ -667,41 +730,29 @@ void SquishMaze::ResolveCollision(playertype &player, int n, vector<gldatatype> 
 
 bool SquishMaze::LinesIntersect(gldatatype &a1, gldatatype &a2, gldatatype &b1, gldatatype &b2)
 {
-	float xi, i1, i2, m1, m2;
+	pointtype u;
+	u.x = a2.d[0] - a1.d[0];
+	u.y = a2.d[1] - a1.d[1];
 	
-	if (a2.d[0]-a1.d[0] != 0)
-		m1 = (a2.d[1]-a1.d[1])/(a2.d[0]-a1.d[0]);
-	else // Vertical line
-	{
-		if (b2.d[0] != b1.d[0])
-			m2 = (b2.d[1]-b1.d[1])/(b2.d[0]-b1.d[0]);
-		else // Both vertical
-			return false;
-
-		if ((b1.d[0]-a1.d[0])*(a1.d[0]-b2.d[0]) > 0 && (b1.d[1]-a1.d[1])*(a1.d[1]-b2.d[1]) > 0)
-			return true;
-		else
-			return false;
-	}
-
-	if (b2.d[0]-b1.d[0] != 0)
-		m2 = (b2.d[1]-b1.d[1])/(b2.d[0]-b1.d[0]);
-	else if ((a1.d[0]-b1.d[0])*(b1.d[0]-a2.d[0]) > 0 && (a1.d[1]-b1.d[1])*(b1.d[1]-a2.d[1]) > 0)
-		return true;
-	else
-		return false;
+	pointtype v;
+	v.x = b2.d[0] - b1.d[0];
+	v.y = b2.d[1] - b1.d[1];
 	
-	i1 = a1.d[1]-m1*a1.d[0];
-	i2 = b1.d[1]-m1*b1.d[0];
-	if (m1 - m2 != 0)
-		xi = (i2-i1)/(m1-m2);
-	else // Parallel lines
-		return false;
+	float d = u.x * v.y - u.y * v.x;
+	
+	if (fabs(d) < .0001) return false; //parallel test
+	
+	pointtype w;
+	w.x = a1.d[0] - b1.d[0];
+	w.y = a1.d[1] - b1.d[1];
+	
+	float s = v.x * w.y - v.y * w.x;
+	if (s < 0 || s > d) return false;
+	
+	float t = u.x * w.y - u.y * w.x;
+	if (t < 0 || t > d) return false;
 
-	if ((a1.d[0]-xi)*(xi-a2.d[0]) > 0 && (b1.d[0]-xi)*(xi-b2.d[0]) > 0)
-		return true;
-
-	return false;
+	return true;
 }
 
 bool SquishMaze::InPoly(vector<gldatatype> &poly, float x, float y)
