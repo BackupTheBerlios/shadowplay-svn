@@ -3,8 +3,6 @@
 	<Name>
 		Test Level Set
 	<LevelBegin>
-		<Number>
-			1
 		<Name>
 			Test Level One
 		<PlayerBegin>
@@ -12,30 +10,58 @@
 				1
 			<PlayerColor>
 				.2 .2 .8
+			<Spring>
+				.9
+			<Damping>
+				.05
 			<PlayerVertexBegin>
-				160 105
-				180 125
-				180 145
-				140 145
-				140 125
+				160 155
+				180 175
+				180 195
+				140 195
+				140 175
 			<PlayerVertexEnd>
 		<PlayerEnd>
-		
-		<PlayerBegin>
-			<GoalNumbers>
-				1
-			<PlayerColor>
-				.2 .8 .2
-			<PlayerVertexBegin>
-				60 105
-				80 150
-				40 150
+
+#		<PlayerBegin>
+#			<GoalNumbers>
+#				1
+#			<PlayerColor>
+#				.8 .2 .2
+#			<Spring>
+#				.1
+#			<Damping>
+#				.1
+#			<PlayerVertexBegin>
+#				240 130
+#				260 130
+#				260 170
+#				220 170
+#				220 150
+#				240 150
+#			<PlayerVertexEnd>
+#		<PlayerEnd>
+
+#		<PlayerBegin>
+#			<GoalNumbers>
+#				1
+#			<PlayerColor>
+#				.2 .8 .2
+#			<Spring>
+#				.1
+#			<Damping>
+#				.1
+#			<PlayerVertexBegin>
+#				50 170
+#				80 170
+#				80 200
+#				50 200
 				#60 160
 				#40 140
 				#40 125
-			<PlayerVertexEnd>
-		<PlayerEnd>
-		
+#			<PlayerVertexEnd>
+#		<PlayerEnd>
+
 		<GoalBegin>
 			<GoalNumber>
 				1
@@ -48,7 +74,7 @@
 				150 50
 			<GoalVertexEnd>
 		<GoalEnd>
-		
+
 		<WallBegin>
 			<WallVertexBegin>
 				0 0

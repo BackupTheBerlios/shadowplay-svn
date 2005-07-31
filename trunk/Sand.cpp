@@ -54,6 +54,9 @@ inline bool Sand::Draw(void)
 
 	tick = SDL_GetTicks();
 	dt = (float)(tick-lastTick)/100;
+	dt = (float)(tick-lastTick)/100;
+	if (dt > .4) // make sure not to try to integrate with too big of a step, instead slow the simulation
+		dt = .4;
 	lastTick = tick;
 
 	if (displaytype == 0)
@@ -160,7 +163,7 @@ inline bool Sand::Draw(void)
 			}
 
 			j++;
-		} while ((count > j*j || j <= R+1) && j <= R*4);
+		} while ((count > j*j || j <= R+1) && j <= R*3);
 
 		if (check < R)
 		{
@@ -192,7 +195,7 @@ inline bool Sand::Draw(void)
 			else
 			{
 				s.vx = 0;
-				s.vy = j/R*4;
+				s.vy = j/R*8;
 			}
 
 			s.x += s.vx*dt;

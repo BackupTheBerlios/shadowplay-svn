@@ -1,5 +1,5 @@
-COMPILE=c++ -ggdb -O3 -mmmx -msse -m3dnow -finline-limit=2000 -frerun-loop-opt -march=athlon-xp `sdl-config --cflags`
-#COMPILE=c++ -O3 `sdl-config --cflags`
+#COMPILE=c++ -ggdb -O3 -mmmx -msse -m3dnow -finline-limit=2000 -frerun-loop-opt -march=athlon-xp `sdl-config --cflags`
+COMPILE=c++ -O3 `sdl-config --cflags`
 
 all: main.o Makefile
 

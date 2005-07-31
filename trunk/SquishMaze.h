@@ -65,9 +65,8 @@ struct goaltype
 
 struct leveltype
 {
-	int number;
 	string name;
-	
+
 	vector<playertype> player;
 	vector<walltype> wall;
 	vector<goaltype> goal;
@@ -109,18 +108,21 @@ class SquishMaze : public GameController
 
 	bool Draw(void);
 	bool LoadLevelSet(string levelsetfilename);
+	void HandleKey(int key);
 
   private:
 	string GetNextLine(fstream &file);
 	void ShowLevelSet(void);
-	void Tokenize(const string& str, vector<string>& tokens, const string& del = " ");
+	void Tokenize(const string &str, vector<string> &tokens, const string &del = " ");
 	bool InPoly(vector<gldatatype> &poly, float x, float y);
-	void ResolveCollision(playertype &player, int n, vector<gldatatype> &poly);
+	void ResolveCollision(playertype &player, vector<gldatatype> &poly);
+//	void ResolveCollision(playertype &pa, playertype &pb);
 	bool LinesIntersect(gldatatype &a1, gldatatype &a2, gldatatype &b1, gldatatype &b2);
 
 	levelsettype *levelset;
 	int currentlevel;
-	
+	leveltype l;
+
 	int tick, lastTick;
 	float dt;
 
