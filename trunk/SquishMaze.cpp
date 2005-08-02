@@ -502,10 +502,43 @@ void SquishMaze::ResolveCollision(playertype &player, vector<gldatatype> &wall)
 			nx = minx;
 			ny = miny;
 			// move the two verticies of the player
+			player.data.at(minj).d[0] -= min*nx;
+			player.data.at(minj).d[1] -= min*ny;
+			player.data.at((minj+1)%player.data.size()).d[0] -= min*nx;
+			player.data.at((minj+1)%player.data.size()).d[1] -= min*ny;
 
 			// Use the normal as if it were the surface it was bouncing off to find the new velocity
 			pointtype &vel1 = player.vel.at(minj);
+
+			// Projection of the velocities in these axes
+			float va = vel1.x*nx + vel1.y*ny;
+
+			if (va < 0)
+			{
+				float vb = (vel1.y*nx - vel1.x*ny)*(.99+va*.1);
+				// New velocities in these axes (after collision)
+				va = -.9*va;
+
+				// Undo the projections
+				vel1.x = va*nx - vb*ny;
+				vel1.y = va*ny + vb*nx;
+			}
+
 			pointtype &vel2 = player.vel.at((minj+1)%player.vel.size());
+
+			// Projection of the velocities in these axes
+			va = vel2.x*nx + vel2.y*ny;
+
+			if (va < 0)
+			{
+				float vb = (vel2.y*nx - vel2.x*ny)*(.99+va*.1);
+				// New velocities in these axes (after collision)
+				va = -.9*va;
+
+				// Undo the projections
+				vel2.x = va*nx - vb*ny;
+				vel2.y = va*ny + vb*nx;
+			}
 		}
 	}
 }
